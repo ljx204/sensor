@@ -982,21 +982,6 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>g_sensor</GroupName>
-          <Files>
-            <File>
-              <FileName>app_stk832x.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\stk832x\app_stk832x.c</FilePath>
-            </File>
-            <File>
-              <FileName>stk832x.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\stk832x\stk832x.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
           <GroupName>protocol</GroupName>
           <Files>
             <File>
@@ -2010,21 +1995,6 @@
               <FileName>ble_uart.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\app_profile\ble_uart.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>g_sensor</GroupName>
-          <Files>
-            <File>
-              <FileName>app_stk832x.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\stk832x\app_stk832x.c</FilePath>
-            </File>
-            <File>
-              <FileName>stk832x.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\stk832x\stk832x.c</FilePath>
             </File>
           </Files>
         </Group>

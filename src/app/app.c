@@ -8,7 +8,6 @@
 */
 #include "app.h"
 #include "app_i2c.h"
-#include "app_stk832x.h"
 #include "bd_communicate_protocol.h"
 #include "app_ble.h"
 #include "app_pah8009.h"
@@ -22,9 +21,9 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
- #include "nrf_delay.h"
+#include "nrf_delay.h"
  
- #include "step_counter.h"
+
 	
 /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 #define DEAD_BEEF     0xDEADBEEF     
