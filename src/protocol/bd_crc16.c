@@ -11,16 +11,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * File Name          : 
- * Author             : 
+ * File Name          :
+ * Author             :
  * Version            : $Revision:$
  * Date               : $Date:$
- * Description        : 
- *                      
+ * Description        :
+ *
  * HISTORY:
  * Date               | Modification                    | Author
- * 28/03/2014         | Initial Revision                | 
- 
+ * 28/03/2014         | Initial Revision                |
+
  */
 #include "bd_crc16.h"
 #include <stdint.h>
@@ -29,7 +29,6 @@ static inline uint16_t crc16_byte(uint16_t crc, const uint8_t data)
 {
     return (crc >> 8) ^ crc16_table[(crc ^ data) & 0xff];
 }
-
 
 /** CRC table for the CRC-16. The poly is 0x8005 (x^16 + x^15 + x^2 + 1) */
 uint16_t const crc16_table[256] =
@@ -65,8 +64,7 @@ uint16_t const crc16_table[256] =
         0x8801, 0x48C0, 0x4980, 0x8941, 0x4B00, 0x8BC1, 0x8A81, 0x4A40,
         0x4E00, 0x8EC1, 0x8F81, 0x4F40, 0x8D01, 0x4DC0, 0x4C80, 0x8C41,
         0x4400, 0x84C1, 0x8581, 0x4540, 0x8701, 0x47C0, 0x4680, 0x8641,
-        0x8201, 0x42C0, 0x4380, 0x8341, 0x4100, 0x81C1, 0x8081, 0x4040
-    };
+        0x8201, 0x42C0, 0x4380, 0x8341, 0x4100, 0x81C1, 0x8081, 0x4040};
 
 /**
  * crc16 - compute the CRC-16 for the data buffer
@@ -82,5 +80,3 @@ uint16_t bd_crc16(uint16_t crc, uint8_t const *buffer, uint16_t len)
         crc = crc16_byte(crc, *buffer++);
     return crc;
 }
-
-

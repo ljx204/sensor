@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-void app_twi_init (void);
+void app_twi_init(void);
 
 void app_twi_uninit(void);
 

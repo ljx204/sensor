@@ -1,7 +1,7 @@
 
 
-#ifndef  __APP_SAADC_H__
-#define  __APP_SAADC_H__
+#ifndef __APP_SAADC_H__
+#define __APP_SAADC_H__
 
 #include <stdbool.h>
 #include <stdint.h>

@@ -11,25 +11,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * File Name          : 
- * Author             : 
+ * File Name          :
+ * Author             :
  * Version            : $Revision:$
  * Date               : $Date:$
- * Description        : 
- *                      
+ * Description        :
+ *
  * HISTORY:
  * Date               | Modification                    | Author
- * 28/03/2014         | Initial Revision                | 
- 
+ * 28/03/2014         | Initial Revision                |
+
  */
 #ifndef __CRC16_H
 #define __CRC16_H
 #include <stdint.h>
-
 
 extern uint16_t const crc16_table[256];
 
 extern uint16_t bd_crc16(uint16_t crc, const uint8_t *buffer, uint16_t len);
 
 #endif /* __CRC16_H */
-

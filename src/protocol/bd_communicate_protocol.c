@@ -1,12 +1,12 @@
-/* 
+/*
  * Date               :   2024/4/24
- 
+
  * Author             :   liujian
 
   ctd_liu@163.com
-	
+
  */
- 
+
 #include "stdint.h"
 #include "string.h"
 #include "app_timer.h"
@@ -14,26 +14,23 @@
 #include "app_uart_task.h"
 #include "bd_communicate_protocol.h"
 
-
 #include "nrf_assert.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
-
 #define GLOBAL_RECEIVE_BUFFER_SIZE 100
 #define GLOBAL_RESPONSE_BUFFER_SIZE 200
 
-
 /****************************************************************************
-* Tempory send buffer
-*****************************************************************************/
+ * Tempory send buffer
+ *****************************************************************************/
 uint8_t global_reponse_buffer[GLOBAL_RESPONSE_BUFFER_SIZE];
-//used to send buffer individually
+// used to send buffer individually
 uint8_t global_L1_header_buffer[L1_HEADER_SIZE];
 
-//extern SportsData_U mSportsData;
+// extern SportsData_U mSportsData;
 
 extern bool notify_steps_enable;
 
@@ -43,44 +40,42 @@ static SEND_TASK_TYPE_T current_task_type = TASK_NONE;
 static SEND_TASK_TYPE_T next_task_type = TASK_NONE;
 
 /*************************************************************************
-* private bond manchine
-**************************************************************************/
+ * private bond manchine
+ **************************************************************************/
 BLUETOOTH_BOND_STATE private_bond_machine = PRIVATE_NOT_BOND;
 /**************************************************************************
-* L1 send sequence id
-***************************************************************************/
+ * L1 send sequence id
+ ***************************************************************************/
 uint16_t L1_sequence_id = 0;
 
 /***************************************************************************
-* define a single response buffer
-* used to store response package triggered while sending
-****************************************************************************/
+ * define a single response buffer
+ * used to store response package triggered while sending
+ ****************************************************************************/
 static struct Response_Buff_Type_t g_ack_package_buffer =
     {
-        0,0,0
-    };
-static L1_Send_Content * g_next_L1_send_content_buffer = NULL;
+        0, 0, 0};
+static L1_Send_Content *g_next_L1_send_content_buffer = NULL;
 /***************************************************************************
-* This variable is used to deal with : send header immediately after send response
-****************************************************************************/
-static L1_Header_Schedule_type_t L1_header_need_schedule = {NULL,0};
-
+ * This variable is used to deal with : send header immediately after send response
+ ****************************************************************************/
+static L1_Header_Schedule_type_t L1_header_need_schedule = {NULL, 0};
 
 #ifdef DEBUG_LOG
-void simple_send_hex(uint8_t * content, uint8_t length);
+void simple_send_hex(uint8_t *content, uint8_t length);
 void simple_uart_putstring(const uint8_t *str);
 #endif
 
 /* Macro defination */
-#define   RESEND_DELAY                        APP_TIMER_TICKS(8000)
-#define   RECEIVE_TIMEOUT                     APP_TIMER_TICKS(8000)
-#define   USER_ACTION_TIMEOUT                 APP_TIMER_TICKS(60000)
-#define   OTA_DELAY_TIMEOUT                   APP_TIMER_TICKS(5000)
+#define RESEND_DELAY APP_TIMER_TICKS(8000)
+#define RECEIVE_TIMEOUT APP_TIMER_TICKS(8000)
+#define USER_ACTION_TIMEOUT APP_TIMER_TICKS(60000)
+#define OTA_DELAY_TIMEOUT APP_TIMER_TICKS(5000)
 
 /* static & global varable */
-void schedule_async_send(void * contenxt,SEND_TASK_TYPE_T task);
+void schedule_async_send(void *contenxt, SEND_TASK_TYPE_T task);
 
-//extern ble_uart_t                 m_nus;
+// extern ble_uart_t                 m_nus;
 
 static L1_Send_Content sendContent[MAX_SEND_TASK];
 
@@ -91,19 +86,17 @@ APP_TIMER_DEF(ota_delay_timer);
 
 ////static app_timer_id_t delay_send_wait_timer;   /* This timer is used to */
 
-//static app_timer_id_t receive_time_out_timer;   /* receive time out timer */
+// static app_timer_id_t receive_time_out_timer;   /* receive time out timer */
 
-//app_timer_id_t user_action_delay_timer;    /* wait for user action timeout timer */
+// app_timer_id_t user_action_delay_timer;    /* wait for user action timeout timer */
 
-//extern app_timer_id_t  ota_delay_timer;     /* ota delay timer*/
-
-
+// extern app_timer_id_t  ota_delay_timer;     /* ota delay timer*/
 
 void stop_health_algorithm(void);
 
 /***********************************************************************
-* global flags used to trigger ota mode 
-************************************************************************/
+ * global flags used to trigger ota mode
+ ************************************************************************/
 bool global_should_trigger_ota = false;
 
 bool get_global_should_trigger_ota_flag(void)
@@ -117,150 +110,153 @@ void set_global_should_trigger_ota_flag(bool value)
 }
 
 /************************************************************************
-* Is bluetooth connected
-*************************************************************************/
+ * Is bluetooth connected
+ *************************************************************************/
 bool is_bluetooth_connected(void)
 {
     return (m_conn_handle != BLE_CONN_HANDLE_INVALID);
 }
 
-
-void async_send(void * para,uint16_t event_size,SEND_TASK_TYPE_T new_task_type);
-static uint32_t L1_resend_package(L1_Send_Content * content);
-static L1Header_t* construct_response_package(uint16_t sequence_id, bool check_success);
-static void delay_send_func(void * context)
+void async_send(void *para, uint16_t event_size, SEND_TASK_TYPE_T new_task_type);
+static uint32_t L1_resend_package(L1_Send_Content *content);
+static L1Header_t *construct_response_package(uint16_t sequence_id, bool check_success);
+static void delay_send_func(void *context)
 {
     uint32_t error_code;
-    L1_Send_Content * content = context;
+    L1_Send_Content *content = context;
     SendCompletePara sendPara;
 
-    //content != NULL
-    if(content->isUsed == 0) {
+    // content != NULL
+    if (content->isUsed == 0)
+    {
         return;
     }
 
-    if(content->contentLeft == 0) { //send complete but not get ack
+    if (content->contentLeft == 0)
+    { // send complete but not get ack
 
-        //wait response package timeout
-        //whole package resent
-        if(content->resendCount < 3) {
+        // wait response package timeout
+        // whole package resent
+        if (content->resendCount < 3)
+        {
             content->resendCount++;
 
             NRF_LOG_INFO("time out resend \r\n");
 
             error_code = L1_resend_package(content);
-            if(error_code == NRF_SUCCESS) {
+            if (error_code == NRF_SUCCESS)
+            {
                 return;
             }
-
         }
-
     }
 
-    //comes here for some reason :(1) resend more than three times (2)data not send complete but content buffer is full last more than 8s
+    // comes here for some reason :(1) resend more than three times (2)data not send complete but content buffer is full last more than 8s
     sendPara.callback = NULL;
     sendPara.context = NULL;
     sendPara.task_type = TASK_NONE;
-    set_complete_callback(sendPara); //cancle callback
+    set_complete_callback(sendPara); // cancle callback
 
     current_task_type = TASK_NONE;
     next_task_type = TASK_NONE;
 
-    content->isUsed = 0; //clean current send, then it can be used by other send request
-    if(content->callback) { //if callback was set
+    content->isUsed = 0; // clean current send, then it can be used by other send request
+    if (content->callback)
+    { // if callback was set
         content->callback(SEND_FAIL);
     }
-
 }
 
 /*****************************************************************
-* receiver timeout handle
-******************************************************************/
-static void receive_time_out_handle(void * contenxt)
+ * receiver timeout handle
+ ******************************************************************/
+static void receive_time_out_handle(void *contenxt)
 {
-    RECEIVE_STATE * state = (RECEIVE_STATE *)contenxt;
+    RECEIVE_STATE *state = (RECEIVE_STATE *)contenxt;
 
     *state = WAIT_START; /* restart receive state machine*/
 #ifdef DEBUG_LOG
-    //simple_uart_putstring((const uint8_t * )"receive time out so restart machine \r\n");
+    // simple_uart_putstring((const uint8_t * )"receive time out so restart machine \r\n");
 #endif
 }
 
 /* bonding time out handle */
-static void user_action_timeout_handle(void * context)
+static void user_action_timeout_handle(void *context)
 {
     USER_TIMER_COMMAND_t command = (USER_TIMER_COMMAND_t)context;
-    if(command == DO_BOND) {
-     //   led_action_stop();
+    if (command == DO_BOND)
+    {
+        //   led_action_stop();
         //        reset_short_press_action_SM(INPUT_ACCEPT_BOND);
-    //    bond_fail_event_dispatch();
-    } else if(command == DO_WAIT_BOND_COMMAND) { //wait bond time out
-        if(m_conn_handle != BLE_CONN_HANDLE_INVALID) { //still connected
-            sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION); //disconnect to the peer
+        //    bond_fail_event_dispatch();
+    }
+    else if (command == DO_WAIT_BOND_COMMAND)
+    { // wait bond time out
+        if (m_conn_handle != BLE_CONN_HANDLE_INVALID)
+        {                                                                                    // still connected
+            sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION); // disconnect to the peer
         }
-    } else {}
+    }
+    else
+    {
+    }
 }
 
-
 /**********************************************************************
-* User to reset the MCU & enter OTA
-***********************************************************************/
+ * User to reset the MCU & enter OTA
+ ***********************************************************************/
 void trigger_ota_mode(void)
 {
 
-//    stop_health_algorithm();
+    //    stop_health_algorithm();
 
-  //  hal_acc_reset();
+    //  hal_acc_reset();
 
-  /***********************************************************
-   //stop all the timer 
-    app_timer_stop_all();
-    //disable radio
-    radio_disable();
-    //disalbe all irq
-    __disable_irq();
-   ***********************************************************/
+    /***********************************************************
+     //stop all the timer
+      app_timer_stop_all();
+      //disable radio
+      radio_disable();
+      //disalbe all irq
+      __disable_irq();
+     ***********************************************************/
 
-    //store time into flash
- //   ota_pre_restart_info_store();
+    // store time into flash
+    //   ota_pre_restart_info_store();
 
-    //alreay disabled softdevice
- //   sd_power_gpregret_set(0x01);
-    //reset the system and start OTA
+    // alreay disabled softdevice
+    //   sd_power_gpregret_set(0x01);
+    // reset the system and start OTA
     NVIC_SystemReset();
-
 }
-
 
 /**********************************************************************
  * OTA time out handle
  **********************************************************************/
-void ota_time_out_handle(void * context)
+void ota_time_out_handle(void *context)
 {
     (void)context;
 #ifdef DEBUG_LOG
 
-    LOG(LEVEL_INFO,"will switch to OTA mode\r\n");
-    //simple_uart_putstring((const uint8_t *)"will switch to OTA mode\r\n");
+    LOG(LEVEL_INFO, "will switch to OTA mode\r\n");
+    // simple_uart_putstring((const uint8_t *)"will switch to OTA mode\r\n");
 #endif
-    //set flags to enter ota
+    // set flags to enter ota
     set_global_should_trigger_ota_flag(true);
-	
-    sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
-	
 
+    sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
 }
 
-
 /**********************************************************************
-* init the environment for private protocol
-***********************************************************************/
+ * init the environment for private protocol
+ ***********************************************************************/
 uint32_t bluetooth_l0_init(void)
 {
     uint32_t i = 0;
     uint32_t error_code;
 
-    for( ; i< MAX_SEND_TASK; ++i) {
+    for (; i < MAX_SEND_TASK; ++i)
+    {
         sendContent[i].isUsed = 0;
         sendContent[i].resendCount = 0;
     }
@@ -269,192 +265,207 @@ uint32_t bluetooth_l0_init(void)
     error_code = app_timer_create(&delay_send_wait_timer, APP_TIMER_MODE_SINGLE_SHOT, delay_send_func);
     APP_ERROR_CHECK(error_code);
 
-    error_code = app_timer_create(&receive_time_out_timer,APP_TIMER_MODE_SINGLE_SHOT,receive_time_out_handle);
+    error_code = app_timer_create(&receive_time_out_timer, APP_TIMER_MODE_SINGLE_SHOT, receive_time_out_handle);
     APP_ERROR_CHECK(error_code);
 
-    error_code = app_timer_create(&user_action_delay_timer,APP_TIMER_MODE_SINGLE_SHOT,user_action_timeout_handle);
+    error_code = app_timer_create(&user_action_delay_timer, APP_TIMER_MODE_SINGLE_SHOT, user_action_timeout_handle);
     APP_ERROR_CHECK(error_code);
 
     return NRF_SUCCESS;
 }
 
-
 /**********************************************************************
-* register wait response package
-***********************************************************************/
-static L1_Send_Content* current_package_wait_response = NULL;
-static void register_wait_response(L1_Send_Content * content)
+ * register wait response package
+ ***********************************************************************/
+static L1_Send_Content *current_package_wait_response = NULL;
+static void register_wait_response(L1_Send_Content *content)
 {
     current_package_wait_response = content;
 }
 
 /**********************************************************************
-* Whole package resend
-***********************************************************************/
-static uint32_t L1_resend_package(L1_Send_Content * content)
+ * Whole package resend
+ ***********************************************************************/
+static uint32_t L1_resend_package(L1_Send_Content *content)
 {
     NRF_LOG_INFO("will resend a package\r\n");
 
-    if(!content) {
+    if (!content)
+    {
         return NRF_ERROR_INVALID_PARAM;
     }
 
     /*fill header*/
-    global_L1_header_buffer[L1_HEADER_MAGIC_POS] = L1_HEADER_MAGIC;           /* Magic */
-    global_L1_header_buffer[L1_HEADER_PROTOCOL_VERSION_POS] = L1_HEADER_VERSION;       /* protocol version */
-    global_L1_header_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] = (content->length >> 8 & 0xFF);    /* length high byte */
-    global_L1_header_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] = (content->length & 0xFF);      /* length low byte */
+    global_L1_header_buffer[L1_HEADER_MAGIC_POS] = L1_HEADER_MAGIC;                           /* Magic */
+    global_L1_header_buffer[L1_HEADER_PROTOCOL_VERSION_POS] = L1_HEADER_VERSION;              /* protocol version */
+    global_L1_header_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] = (content->length >> 8 & 0xFF); /* length high byte */
+    global_L1_header_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] = (content->length & 0xFF);       /* length low byte */
     /*cal crc*/
-    uint16_t crc16_ret = bd_crc16(0,content->content,content->length);
-    global_L1_header_buffer[L1_HEADER_CRC16_HIGH_BYTE_POS] = ( crc16_ret >> 8) & 0xff;
+    uint16_t crc16_ret = bd_crc16(0, content->content, content->length);
+    global_L1_header_buffer[L1_HEADER_CRC16_HIGH_BYTE_POS] = (crc16_ret >> 8) & 0xff;
     global_L1_header_buffer[L1_HEADER_CRC16_LOW_BYTE_POS] = crc16_ret & 0xff;
 
-    //sequence id
+    // sequence id
     global_L1_header_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] = (L1_sequence_id >> 8) & 0xff;
     global_L1_header_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] = L1_sequence_id & 0xff;
 
-    //prepare for send L2 content
+    // prepare for send L2 content
     content->contentLeft = content->length;
     content->sequence_id = L1_sequence_id;
-    //every time send a package,increase L1_sequence_id, whether it's success or not
-    L1_sequence_id ++;
+    // every time send a package,increase L1_sequence_id, whether it's success or not
+    L1_sequence_id++;
 
-    //register need to schedule header
+    // register need to schedule header
     L1_header_need_schedule.isUsed = 1;
     L1_header_need_schedule.content = content;
 
-    //schedule async send
-    schedule_async_send(content,TASK_DATA);
+    // schedule async send
+    schedule_async_send(content, TASK_DATA);
     return NRF_SUCCESS;
 }
 
 /************************************************************************
-* If receive response package call this function
-*************************************************************************/
-static void response_package_handle(uint16_t sequence_id,uint8_t crc_check)
+ * If receive response package call this function
+ *************************************************************************/
+static void response_package_handle(uint16_t sequence_id, uint8_t crc_check)
 {
     uint32_t err_code;
 
     SendCompletePara sendPara;
-    
-	  if(!current_package_wait_response) 
-		{
+
+    if (!current_package_wait_response)
+    {
         NRF_LOG_INFO(" no package wait res\r\n");
         return;
     }
 
-
-    if(current_package_wait_response->sequence_id == sequence_id ) {
+    if (current_package_wait_response->sequence_id == sequence_id)
+    {
 
         // get response for current package so stop timer
         app_timer_stop(delay_send_wait_timer);
 
-
-        if( crc_check == CRC_SUCCESS) {
+        if (crc_check == CRC_SUCCESS)
+        {
 
             NRF_LOG_INFO("get response show crc succ\r\n");
 
-            sendPara.callback   = NULL;
-            sendPara.context    = NULL;
-            sendPara.task_type  = TASK_NONE;
-					  
-            set_complete_callback(sendPara);   //cancle callback
+            sendPara.callback = NULL;
+            sendPara.context = NULL;
+            sendPara.task_type = TASK_NONE;
+
+            set_complete_callback(sendPara); // cancle callback
 
             current_package_wait_response->isUsed = 0;
-					
-            if(current_package_wait_response->callback) 
-						{
+
+            if (current_package_wait_response->callback)
+            {
                 current_package_wait_response->callback(SEND_SUCCESS);
             }
-
-
-        } else { //error resend
+        }
+        else
+        { // error resend
             NRF_LOG_INFO("get response show crc fail\r\n");
 
-            if(current_package_wait_response->resendCount >= 3) {
+            if (current_package_wait_response->resendCount >= 3)
+            {
 
                 sendPara.callback = NULL;
                 sendPara.context = NULL;
                 sendPara.task_type = TASK_NONE;
-                set_complete_callback(sendPara); //cancle callback
+                set_complete_callback(sendPara); // cancle callback
 
                 current_task_type = TASK_NONE;
                 next_task_type = TASK_NONE;
                 current_package_wait_response->isUsed = 0;
 
-                if(current_package_wait_response->callback) {
+                if (current_package_wait_response->callback)
+                {
                     current_package_wait_response->callback(SEND_FAIL);
                 }
-            } else {
+            }
+            else
+            {
                 NRF_LOG_INFO("response crc err resend\r\n");
 
                 current_package_wait_response->resendCount++;
                 err_code = L1_resend_package(current_package_wait_response);
-                if(err_code != NRF_SUCCESS) {
+                if (err_code != NRF_SUCCESS)
+                {
                     sendPara.callback = NULL;
                     sendPara.context = NULL;
                     sendPara.task_type = TASK_NONE;
-                    set_complete_callback(sendPara); //cancle callback
+                    set_complete_callback(sendPara); // cancle callback
 
                     current_package_wait_response->isUsed = 0;
-                    if(current_package_wait_response->callback) {
+                    if (current_package_wait_response->callback)
+                    {
                         current_package_wait_response->callback(SEND_FAIL);
                     }
                 }
             }
         }
     }
-    else {
+    else
+    {
         NRF_LOG_INFO("receive a package with wrong sequesnce id\r\n");
     }
 }
 
-
-
 /**********************************************************************
-* Schedule next package to be send after prev package send success
-***********************************************************************/
-void schedule_async_send(void * contenxt,SEND_TASK_TYPE_T task)
+ * Schedule next package to be send after prev package send success
+ ***********************************************************************/
+void schedule_async_send(void *contenxt, SEND_TASK_TYPE_T task)
 {
     /***********************************************************************
-    * Call this function shows that last package send success
-    *************************************************************************/
+     * Call this function shows that last package send success
+     *************************************************************************/
     ASSERT(contenxt != NULL);
 
-    if(task == TASK_DATA) { //may be comes from data (send & resend) or (send complete callback)
-        L1_Send_Content * data_content = (L1_Send_Content *)contenxt;
+    if (task == TASK_DATA)
+    { // may be comes from data (send & resend) or (send complete callback)
+        L1_Send_Content *data_content = (L1_Send_Content *)contenxt;
 
-        if(data_content->contentLeft != 0) {
+        if (data_content->contentLeft != 0)
+        {
             app_timer_stop(delay_send_wait_timer);
         }
-        async_send(&data_content,sizeof(L1_Send_Content *),TASK_DATA);
-    } else if (task == TASK_ACK) {
-        struct Response_Buff_Type_t * ack_content = (struct Response_Buff_Type_t *)contenxt;
-        async_send(&ack_content,sizeof(struct Response_Buff_Type_t *),TASK_ACK);
-
-    } else {//task none
+        async_send(&data_content, sizeof(L1_Send_Content *), TASK_DATA);
+    }
+    else if (task == TASK_ACK)
+    {
+        struct Response_Buff_Type_t *ack_content = (struct Response_Buff_Type_t *)contenxt;
+        async_send(&ack_content, sizeof(struct Response_Buff_Type_t *), TASK_ACK);
+    }
+    else
+    { // task none
         NRF_LOG_INFO("call schedule_async_send with wrong para\r\n");
-
     }
 }
 
 /****************************************************************************
-* new_task_type shows where call this function
-*****************************************************************************/
-void async_send(void * para,uint16_t event_size,SEND_TASK_TYPE_T new_task_type)
+ * new_task_type shows where call this function
+ *****************************************************************************/
+void async_send(void *para, uint16_t event_size, SEND_TASK_TYPE_T new_task_type)
 {
 
     ASSERT(para != NULL);
-    ASSERT(event_size == sizeof(void*));
+    ASSERT(event_size == sizeof(void *));
 
-    if(current_task_type == TASK_NONE) {
+    if (current_task_type == TASK_NONE)
+    {
         current_task_type = new_task_type;
-    } else {
-        if((current_task_type == TASK_ACK) && (new_task_type == TASK_DATA) && (L1_header_need_schedule.isUsed == 1)) {//get a data send request while no buffer to send ack
+    }
+    else
+    {
+        if ((current_task_type == TASK_ACK) && (new_task_type == TASK_DATA) && (L1_header_need_schedule.isUsed == 1))
+        { // get a data send request while no buffer to send ack
             g_next_L1_send_content_buffer = *((L1_Send_Content **)para);
             next_task_type = TASK_DATA;
             return;
-        } else if((current_task_type == TASK_DATA) && (new_task_type == TASK_ACK)) {
+        }
+        else if ((current_task_type == TASK_DATA) && (new_task_type == TASK_ACK))
+        {
             next_task_type = TASK_ACK;
             return;
         }
@@ -462,181 +473,203 @@ void async_send(void * para,uint16_t event_size,SEND_TASK_TYPE_T new_task_type)
 
     uint32_t error_code;
     uint16_t sendLen = 0;
-    uint8_t * currentSendPointer = NULL;
+    uint8_t *currentSendPointer = NULL;
     SendCompletePara sendPara;
-    L1_Send_Content * content = NULL;
-
+    L1_Send_Content *content = NULL;
 
     error_code = NRF_SUCCESS;
 
 LABEL_SEND_ACK:
-    if(current_task_type == TASK_ACK) {
+    if (current_task_type == TASK_ACK)
+    {
 
-        if(g_ack_package_buffer.isUsed == 1) {
+        if (g_ack_package_buffer.isUsed == 1)
+        {
 
-            currentSendPointer = (uint8_t *)construct_response_package(g_ack_package_buffer.sequence_id,(g_ack_package_buffer.check_success == 1) ?true:false );
+            currentSendPointer = (uint8_t *)construct_response_package(g_ack_package_buffer.sequence_id, (g_ack_package_buffer.check_success == 1) ? true : false);
             sendLen = L1_HEADER_SIZE;
 
             error_code = ble_uart_send_string(currentSendPointer, &sendLen);
 
-            if(error_code == NRF_SUCCESS) {
-                //set task content
+            if (error_code == NRF_SUCCESS)
+            {
+                // set task content
                 current_task_type = TASK_NONE;
                 g_ack_package_buffer.isUsed = 0;
-                if((next_task_type == TASK_DATA) && (g_next_L1_send_content_buffer != NULL)) {
+                if ((next_task_type == TASK_DATA) && (g_next_L1_send_content_buffer != NULL))
+                {
                     current_task_type = TASK_DATA;
                     next_task_type = TASK_NONE;
                     content = g_next_L1_send_content_buffer;
-                    goto SEND_DATA_LABLE; //FIXME://////////////
+                    goto SEND_DATA_LABLE; // FIXME://////////////
                 }
                 return;
-
-            } else if (error_code == NRF_ERROR_RESOURCES) {
+            }
+            else if (error_code == NRF_ERROR_RESOURCES)
+            {
                 sendPara.callback = schedule_async_send;
                 sendPara.context = &g_ack_package_buffer;
                 sendPara.task_type = TASK_ACK;
                 set_complete_callback(sendPara);
-
-            } else {
-                //¶ªÆú
+            }
+            else
+            {
+                // ï¿½ï¿½ï¿½ï¿½
                 current_task_type = TASK_NONE;
                 next_task_type = TASK_NONE;
-                g_ack_package_buffer.isUsed= 0;
-                if((next_task_type == TASK_DATA) && (g_next_L1_send_content_buffer != NULL)) {
+                g_ack_package_buffer.isUsed = 0;
+                if ((next_task_type == TASK_DATA) && (g_next_L1_send_content_buffer != NULL))
+                {
                     current_task_type = TASK_DATA;
                     next_task_type = TASK_NONE;
                     content = g_next_L1_send_content_buffer;
-                    goto SEND_DATA_LABLE; //FIXME://////////////
+                    goto SEND_DATA_LABLE; // FIXME://////////////
                 }
             }
-
         }
         return;
     }
 
-    if(current_task_type == TASK_NONE) {
-        return; //error condition
+    if (current_task_type == TASK_NONE)
+    {
+        return; // error condition
     }
 
-    content =  *((L1_Send_Content **)para);
+    content = *((L1_Send_Content **)para);
 
-    //error status
+    // error status
     ASSERT(content != NULL);
 
 SEND_DATA_LABLE:
     error_code = NRF_SUCCESS;
     SEND_CONTENT_TYPE_T sendContentType = CONTENT_NONE;
-    while(error_code == NRF_SUCCESS) { // send will continue before buffer was full
+    while (error_code == NRF_SUCCESS)
+    { // send will continue before buffer was full
         /***********************************************************
-        * Order :header content ack
-        ************************************************************/
-        //first need to check header send request
-        if(L1_header_need_schedule.isUsed == 1) {
+         * Order :header content ack
+         ************************************************************/
+        // first need to check header send request
+        if (L1_header_need_schedule.isUsed == 1)
+        {
 
             currentSendPointer = global_L1_header_buffer;
             sendLen = L1_HEADER_SIZE;
             sendContentType = CONTENT_HEADER;
+        }
+        else
+        {
+            // check other content
 
-        } else {
-            //check other content
-
-            if(content ->contentLeft != 0) {
+            if (content->contentLeft != 0)
+            {
 
                 ASSERT(content->content != NULL);
-                sendLen = ( content->contentLeft > BLE_UART_MAX_DATA_LEN ) ? BLE_UART_MAX_DATA_LEN : (content->contentLeft);
+                sendLen = (content->contentLeft > BLE_UART_MAX_DATA_LEN) ? BLE_UART_MAX_DATA_LEN : (content->contentLeft);
                 currentSendPointer = (content->content + (content->length - content->contentLeft));
                 sendContentType = CONTENT_DATA;
-
-            } else {
+            }
+            else
+            {
                 sendContentType = CONTENT_NONE;
             }
         }
 
-
-        //first check if data is send complete
-        if(sendContentType == CONTENT_NONE) {
-            break; //which means send data complete
+        // first check if data is send complete
+        if (sendContentType == CONTENT_NONE)
+        {
+            break; // which means send data complete
         }
 
         error_code = ble_uart_send_string(currentSendPointer, &sendLen);
 
-        if(error_code == NRF_SUCCESS) {
-            //do flag
-            switch(sendContentType) {
-                case CONTENT_NONE:
-                    break;
-                case CONTENT_HEADER: //mark header send complete
-                    if(L1_header_need_schedule.isUsed == 1) {
+        if (error_code == NRF_SUCCESS)
+        {
+            // do flag
+            switch (sendContentType)
+            {
+            case CONTENT_NONE:
+                break;
+            case CONTENT_HEADER: // mark header send complete
+                if (L1_header_need_schedule.isUsed == 1)
+                {
 
-                        L1_header_need_schedule.isUsed = 0;
-                        memset(global_L1_header_buffer,0,L1_HEADER_SIZE);
+                    L1_header_need_schedule.isUsed = 0;
+                    memset(global_L1_header_buffer, 0, L1_HEADER_SIZE);
+                }
+                break;
+            case CONTENT_DATA:
+                content->contentLeft -= sendLen;
+                if (content->contentLeft == 0)
+                { // send complete & will register wait response
+
+                    sendPara.callback = NULL;
+                    sendPara.context = NULL;
+                    sendPara.task_type = TASK_NONE;
+                    set_complete_callback(sendPara);
+                    // set task content
+                    current_task_type = TASK_NONE;
+                    // begin to wait package response
+                    register_wait_response(content);
+                    // start timer wait for response
+                    app_timer_start(delay_send_wait_timer, RESEND_DELAY, (void *)content);
+                    if ((next_task_type == TASK_ACK) && (g_ack_package_buffer.isUsed == 1))
+                    {
+                        current_task_type = TASK_ACK;
+                        next_task_type = TASK_NONE;
+                        goto LABEL_SEND_ACK;
                     }
-                    break;
-                case CONTENT_DATA:
-                    content ->contentLeft -= sendLen;
-                    if(content ->contentLeft == 0) { //send complete & will register wait response
-                        
-                        sendPara.callback = NULL;
-                        sendPara.context = NULL;
-                        sendPara.task_type = TASK_NONE;
-                        set_complete_callback(sendPara);
-                        //set task content
-                        current_task_type = TASK_NONE;
-                        //begin to wait package response
-                        register_wait_response(content);
-                        //start timer wait for response
-                        app_timer_start(delay_send_wait_timer,RESEND_DELAY,(void *)content);
-                        if((next_task_type == TASK_ACK) && (g_ack_package_buffer.isUsed == 1)) {
-                            current_task_type = TASK_ACK;
-                            next_task_type = TASK_NONE;
-                            goto LABEL_SEND_ACK;
-                        }
-                    }
-                    break;
-                case CONTENT_ACK:
-                    if(g_ack_package_buffer.isUsed == 1) { //send ack package
-                        //set task content
-                        current_task_type = TASK_NONE;
-                        g_ack_package_buffer.isUsed = 0;
-                    }
-                    break;
-                default:
-                    break;
+                }
+                break;
+            case CONTENT_ACK:
+                if (g_ack_package_buffer.isUsed == 1)
+                { // send ack package
+                    // set task content
+                    current_task_type = TASK_NONE;
+                    g_ack_package_buffer.isUsed = 0;
+                }
+                break;
+            default:
+                break;
             }
-
-        } else if (error_code == NRF_ERROR_RESOURCES) {
+        }
+        else if (error_code == NRF_ERROR_RESOURCES)
+        {
             sendPara.callback = schedule_async_send;
             sendPara.context = content;
             sendPara.task_type = TASK_DATA;
             set_complete_callback(sendPara);
-            //start timer wait for response
-            app_timer_start(delay_send_wait_timer,RESEND_DELAY,(void *)content);
-            break; //wait to reschedule
-        } else {
-            //send fail
+            // start timer wait for response
+            app_timer_start(delay_send_wait_timer, RESEND_DELAY, (void *)content);
+            break; // wait to reschedule
+        }
+        else
+        {
+            // send fail
             sendPara.callback = NULL;
             sendPara.context = NULL;
             sendPara.task_type = TASK_NONE;
             set_complete_callback(sendPara);
-            //set task content
+            // set task content
             current_task_type = TASK_NONE;
 
-            if(content->callback) {
+            if (content->callback)
+            {
                 content->isUsed = 0;
                 content->callback(SEND_FAIL);
             }
 
-            if(next_task_type == TASK_ACK) {
-                current_task_type =  TASK_ACK;
+            if (next_task_type == TASK_ACK)
+            {
+                current_task_type = TASK_ACK;
                 next_task_type = TASK_NONE;
                 goto LABEL_SEND_ACK;
-            } else {
+            }
+            else
+            {
                 return;
             }
         }
-    
     }
-
 }
 
 /*************************************************************
@@ -645,90 +678,94 @@ SEND_DATA_LABLE:
  *  content->content
  * content->callback
  *  content->length
-**************************************************************/
+ **************************************************************/
 
-uint32_t L1_send(L2_Send_Content * content)
+uint32_t L1_send(L2_Send_Content *content)
 {
     uint32_t err_code;
 
-    if(!content) {
+    if (!content)
+    {
         return NRF_ERROR_INVALID_PARAM;
     }
 
     uint32_t i = 0;
 
     err_code = NRF_ERROR_NO_MEM;
-    for( i = 0; i<MAX_SEND_TASK ; ++i ) {
+    for (i = 0; i < MAX_SEND_TASK; ++i)
+    {
 
-        if( sendContent[i].isUsed ) {
+        if (sendContent[i].isUsed)
+        {
             continue;
-        } else {
+        }
+        else
+        {
             sendContent[i].isUsed = 1;
             err_code = 0;
             break;
         }
-
     }
 
-    if(err_code == NRF_ERROR_NO_MEM) {
+    if (err_code == NRF_ERROR_NO_MEM)
+    {
         return NRF_ERROR_NO_MEM;
     }
 
     /*fill header*/
-    global_L1_header_buffer[L1_HEADER_MAGIC_POS] = L1_HEADER_MAGIC;           /* Magic */
-    global_L1_header_buffer[L1_HEADER_PROTOCOL_VERSION_POS] = L1_HEADER_VERSION;       /* protocol version */
-    global_L1_header_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] = (content->length >> 8 & 0xFF);    /* length high byte */
-    global_L1_header_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] = (content->length & 0xFF);      /* length low byte */
+    global_L1_header_buffer[L1_HEADER_MAGIC_POS] = L1_HEADER_MAGIC;                           /* Magic */
+    global_L1_header_buffer[L1_HEADER_PROTOCOL_VERSION_POS] = L1_HEADER_VERSION;              /* protocol version */
+    global_L1_header_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] = (content->length >> 8 & 0xFF); /* length high byte */
+    global_L1_header_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] = (content->length & 0xFF);       /* length low byte */
     /*cal crc*/
-    uint16_t crc16_ret = bd_crc16(0,content->content,content->length);
-    global_L1_header_buffer[L1_HEADER_CRC16_HIGH_BYTE_POS] = ( crc16_ret >> 8) & 0xff;
+    uint16_t crc16_ret = bd_crc16(0, content->content, content->length);
+    global_L1_header_buffer[L1_HEADER_CRC16_HIGH_BYTE_POS] = (crc16_ret >> 8) & 0xff;
     global_L1_header_buffer[L1_HEADER_CRC16_LOW_BYTE_POS] = crc16_ret & 0xff;
 
-    //sequence id
+    // sequence id
     global_L1_header_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] = (L1_sequence_id >> 8) & 0xff;
     global_L1_header_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] = L1_sequence_id & 0xff;
 
-    //prepare for send L2 content
-    sendContent[i].callback  =  content->callback;
-    sendContent[i].content   =  content->content;
-    sendContent[i].length  = content->length;
-    sendContent[i].contentLeft  = content->length;
+    // prepare for send L2 content
+    sendContent[i].callback = content->callback;
+    sendContent[i].content = content->content;
+    sendContent[i].length = content->length;
+    sendContent[i].contentLeft = content->length;
     sendContent[i].resendCount = 0;
     sendContent[i].sequence_id = L1_sequence_id;
 
-    //every time send a package,increase L1_sequence_id, whether it's success or not
-    L1_sequence_id ++;
+    // every time send a package,increase L1_sequence_id, whether it's success or not
+    L1_sequence_id++;
 
-    //register need to schedule header
+    // register need to schedule header
     L1_header_need_schedule.isUsed = 1;
     L1_header_need_schedule.content = &sendContent[i];
 
-    //schedule async send
-    schedule_async_send(&sendContent[i],TASK_DATA);
+    // schedule async send
+    schedule_async_send(&sendContent[i], TASK_DATA);
 
     return NRF_SUCCESS;
-
 }
 
-
 /***********************************************************************
-* Debug callback, & will be removede in the near future
-************************************************************************/
-void send_status_callback(SEND_STATUS status )
+ * Debug callback, & will be removede in the near future
+ ************************************************************************/
+void send_status_callback(SEND_STATUS status)
 {
-    if(status == SEND_SUCCESS) {
+    if (status == SEND_SUCCESS)
+    {
 
 #ifdef DEBUG_LOG
         NRF_LOG_INFO("send success\r\n");
         //    simple_uart_putstring((const uint8_t *)"send success\r\n");
 #endif
-
-    } else {
+    }
+    else
+    {
 #ifdef DEBUG_LOG
         NRF_LOG_INFO("send fail \r\n");
         //    simple_uart_putstring((const uint8_t *)"send fail \r\n");
 #endif
-
     }
 }
 
@@ -865,49 +902,47 @@ static uint32_t  resolve_HealthData_command(uint8_t key,const uint8_t * value ,u
 #endif
 
 /***********************************************************************
-* L2 command resolve function
-************************************************************************/
-static uint32_t  resolve_notify_command(uint8_t key,const uint8_t * value ,uint16_t length)
+ * L2 command resolve function
+ ************************************************************************/
+static uint32_t resolve_notify_command(uint8_t key, const uint8_t *value, uint16_t length)
 {
     uint32_t err_code = NRF_SUCCESS;
 
-
-    switch(key) {
-        case 0x01: //phone call
+    switch (key)
+    {
+    case 0x01: // phone call
         //    notification_start(NOTIFICATION_CALLING,0);
 #ifdef DEBUG_LOG
 
 //            LOG(LEVEL_INFO,"----------PHONE CALLED\r\n");
-            //        simple_uart_putstring("----------PHONE CALLED\r\n");
+//        simple_uart_putstring("----------PHONE CALLED\r\n");
 #endif
-            //hal_vibrate_once(1,1);
-            //hal_vibrate_once(1,1);
-            //hal_vibrate_once(1,1);
-            break;
-        case 0x02: //answered
+               // hal_vibrate_once(1,1);
+        // hal_vibrate_once(1,1);
+        // hal_vibrate_once(1,1);
+        break;
+    case 0x02: // answered
         //    motor_action_control_stop();
-         //   led_action_stop();
+        //   led_action_stop();
 
-            break;
-        case 0x03: //rejected
-          //  motor_action_control_stop();
-          //  led_action_stop();
+        break;
+    case 0x03: // rejected
+               //   motor_action_control_stop();
+               //   led_action_stop();
 
-            break;
-        default:
-            err_code = NRF_ERROR_INVALID_PARAM;
-
+        break;
+    default:
+        err_code = NRF_ERROR_INVALID_PARAM;
     }
 
 #ifdef DEBUG_LOG
 //    LOG(LEVEL_INFO,"notify: key %d:len:%d -v: %d",key,length,value[0]);
-    //     char str[32];
-    //     sprintf(str,"notify: key %d:len:%d -v: %d\t",key,length,value[0]);
-    //     simple_uart_putstring((const uint8_t *)str);
+//     char str[32];
+//     sprintf(str,"notify: key %d:len:%d -v: %d\t",key,length,value[0]);
+//     simple_uart_putstring((const uint8_t *)str);
 #endif
 
     return err_code;
-
 }
 
 #if 0
@@ -1078,7 +1113,7 @@ void bond_success_event_observer(void)
 #if 0
 /************************************************************************
 * resolve bond command
-* Çø·Ö°ó¶¨ºÍµÇÂ¼Á½¸öÃüÁî£¬×îÖ÷ÒªÊÇµÇÂ¼ÃüÁîÊÇ²»Ó¦¸ÃÌáÊ¾ÓÃ»§ÇÃ»÷ÊÖ»·
+* ï¿½ï¿½ï¿½Ö°ó¶¨ºÍµï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½î£¬ï¿½ï¿½ï¿½ï¿½Òªï¿½Çµï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½Ç²ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½Ã»ï¿½ï¿½Ã»ï¿½ï¿½Ö»ï¿½
 *************************************************************************/
 static uint32_t  resolve_private_bond_command(uint8_t key,const uint8_t * value ,uint16_t length)
 {
@@ -1153,29 +1188,28 @@ static uint32_t  resolve_private_bond_command(uint8_t key,const uint8_t * value 
 
 #endif
 
-uint32_t enter_ota_status_response(uint8_t status_code ,uint8_t err_code)
+uint32_t enter_ota_status_response(uint8_t status_code, uint8_t err_code)
 {
     L2_Send_Content sendContent;
 
-    global_reponse_buffer[0] = FIRMWARE_UPDATE_CMD_ID;                        /*command id*/
-    global_reponse_buffer[1] = L2_HEADER_VERSION;                             /*L2 header version */
-    global_reponse_buffer[2] = KEY_ENTER_DFU_MODE_RET;                        /*first key */
+    global_reponse_buffer[0] = FIRMWARE_UPDATE_CMD_ID; /*command id*/
+    global_reponse_buffer[1] = L2_HEADER_VERSION;      /*L2 header version */
+    global_reponse_buffer[2] = KEY_ENTER_DFU_MODE_RET; /*first key */
     global_reponse_buffer[3] = 0;
-    global_reponse_buffer[4] = 2;                                             /* length  = 2 */
+    global_reponse_buffer[4] = 2; /* length  = 2 */
 
     global_reponse_buffer[5] = status_code;
     global_reponse_buffer[6] = err_code;
 
-    sendContent.callback    = NULL;       //FIXME: should add send fail resend
-    sendContent.content     = global_reponse_buffer;
-    sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
+    sendContent.callback = NULL; // FIXME: should add send fail resend
+    sendContent.content = global_reponse_buffer;
+    sendContent.length = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
     return L1_send(&sendContent);
-
 }
 
 static void resolve_firmware_update_command(FIRMWARE_UPDATE_KEY key)
 {
-	#if 0
+#if 0
     switch (key) {
         case KEY_ENTER_FIRMWARE_UPDATE_MODE: //begin to OTA
             {
@@ -1223,228 +1257,238 @@ static void resolve_firmware_update_command(FIRMWARE_UPDATE_KEY key)
         default:
             break;
     }
-		#endif
-		
+#endif
 }
 #ifdef TESTFLASH
-static uint32_t resolve_test_flash_command(uint8_t key,const uint8_t * value ,uint16_t length)
+static uint32_t resolve_test_flash_command(uint8_t key, const uint8_t *value, uint16_t length)
 {
     uint32_t err_code = NRF_SUCCESS;
 
-
-    switch(key) {
-        case 0x01: // save one group
-            test_group_data_write(1);
-            break;
-        case 0x02: // return all data
-            send_all_data();
-            break;
-        case 0x03: //rejected
-            test_flash_send_2_group();
-            break;
-        case 0x04:
-        default:
-            err_code = NRF_ERROR_INVALID_PARAM;
-
+    switch (key)
+    {
+    case 0x01: // save one group
+        test_group_data_write(1);
+        break;
+    case 0x02: // return all data
+        send_all_data();
+        break;
+    case 0x03: // rejected
+        test_flash_send_2_group();
+        break;
+    case 0x04:
+    default:
+        err_code = NRF_ERROR_INVALID_PARAM;
     }
 #ifdef DEBUG_LOG
-    LOG(LEVEL_INFO,"notify: key %d:len:%d -v: %d\n",key,length,value[0]);
+    LOG(LEVEL_INFO, "notify: key %d:len:%d -v: %d\n", key, length, value[0]);
 #endif
 
     return err_code;
-
 }
 #endif
 /***********************************************************************
-* para introduction
-* data                                   :      just the full of L2
-* content_length :      length of data
-* resolve_state  :  L1 receive data length
-************************************************************************/
-static uint32_t L2_frame_resolve(uint8_t * data, uint16_t length,RECEIVE_STATE * resolve_state)
+ * para introduction
+ * data                                   :      just the full of L2
+ * content_length :      length of data
+ * resolve_state  :  L1 receive data length
+ ************************************************************************/
+static uint32_t L2_frame_resolve(uint8_t *data, uint16_t length, RECEIVE_STATE *resolve_state)
 {
-    //para check
-    if((!data) || (length == 0)) {
+    // para check
+    if ((!data) || (length == 0))
+    {
         return NRF_ERROR_INVALID_PARAM;
     }
 
     BLUETOOTH_COMMUNICATE_COMMAND command_id;
-    uint8_t version_num;                                            /* L2 version number */
-    uint8_t first_key;                                                      /* first key of L2 payload*/
-    uint16_t first_value_length;            /* length of first value */
+    uint8_t version_num;         /* L2 version number */
+    uint8_t first_key;           /* first key of L2 payload*/
+    uint16_t first_value_length; /* length of first value */
 
-    command_id      = (BLUETOOTH_COMMUNICATE_COMMAND)data[0];
+    command_id = (BLUETOOTH_COMMUNICATE_COMMAND)data[0];
     version_num = data[1];
-    version_num = version_num;                      /*current not use it*/
+    version_num = version_num; /*current not use it*/
 #ifdef DEBUG_LOG
 
     {
 
         //  char str[64];
-        if(private_bond_machine==PRIVATE_NOT_BOND)
+        if (private_bond_machine == PRIVATE_NOT_BOND)
         {
-            LOG(LEVEL_INFO,"PRIVATE_NOT_BOND\n");
+            LOG(LEVEL_INFO, "PRIVATE_NOT_BOND\n");
             //    sprintf(str,"PRIVATE_NOT_BOND\r\n");
-        } else if(private_bond_machine==PRIVATE_BOND_SUCCESS)
+        }
+        else if (private_bond_machine == PRIVATE_BOND_SUCCESS)
         {
-            LOG(LEVEL_INFO,"PRIVATE_BOND_SUCCESS\n");
+            LOG(LEVEL_INFO, "PRIVATE_BOND_SUCCESS\n");
             //    sprintf(str,"PRIVATE_BOND_SUCCESS\r\n");
         }
         // simple_uart_putstring((const uint8_t *)str);
         //    sprintf(str,"command_id:%d\r\n",command_id);
         //    simple_uart_putstring((const uint8_t *)str);
-        LOG(LEVEL_INFO,"command_id:%d\n",command_id);
+        LOG(LEVEL_INFO, "command_id:%d\n", command_id);
     }
 #endif
-    switch (private_bond_machine) {
-        case PRIVATE_NOT_BOND: { //wait bond
-                if(command_id == BOND_COMMAND_ID) {
-                    first_key = data[2];
-                    first_value_length = (((data[3]<< 8) |data[4]) & 0x1FF);
+    switch (private_bond_machine)
+    {
+    case PRIVATE_NOT_BOND:
+    { // wait bond
+        if (command_id == BOND_COMMAND_ID)
+        {
+            first_key = data[2];
+            first_value_length = (((data[3] << 8) | data[4]) & 0x1FF);
 
-                 //   resolve_private_bond_command(first_key,data+ L2_FIRST_VALUE_POS,first_value_length);
+            //   resolve_private_bond_command(first_key,data+ L2_FIRST_VALUE_POS,first_value_length);
+        }
+        else if (FACTORY_TEST_COMMAND_ID == command_id)
+        {
+            uint16_t offset = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE;
+            //     uint16_t payload = 0;
+            uint16_t v_length = 0;
+            uint8_t *key = data + L2_HEADER_SIZE;
+            while (length - offset >= 0)
+            {
+                v_length = ((*(key + 1)) << 8) + (*(key + 2));
 
-                } else if (FACTORY_TEST_COMMAND_ID == command_id) {
-                    uint16_t offset = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE;
-                    //     uint16_t payload = 0;
-                    uint16_t v_length = 0;
-                    uint8_t *key = data + L2_HEADER_SIZE;
-                    while(length - offset >= 0) {
-                        v_length = ((*(key + 1)) << 8) + (*(key + 2));
-
-                   //     do_test(key, v_length);
-                        key += (v_length + L2_PAYLOAD_HEADER_SIZE);
-                        offset = offset + v_length + L2_PAYLOAD_HEADER_SIZE;
-                    }
-                } else if(command_id == FIRMWARE_UPDATE_CMD_ID) {
-                    first_key = data[2];
-                    resolve_firmware_update_command((FIRMWARE_UPDATE_KEY)first_key);
-                } else if(command_id == GET_STACK_DUMP) {
-                    first_key = data[2];
-                    first_value_length = (((data[3]<< 8) |data[4]) & 0x1FF);
-                  //  get_stack_dump_command_resolve(first_key);
-                } else if(command_id == BLUETOOTH_LOG_COMMAND_ID) {
-                    first_key = data[2];
-                //    resolve_log_command_id((log_command_key_t)first_key);
-                }
+                //     do_test(key, v_length);
+                key += (v_length + L2_PAYLOAD_HEADER_SIZE);
+                offset = offset + v_length + L2_PAYLOAD_HEADER_SIZE;
             }
+        }
+        else if (command_id == FIRMWARE_UPDATE_CMD_ID)
+        {
+            first_key = data[2];
+            resolve_firmware_update_command((FIRMWARE_UPDATE_KEY)first_key);
+        }
+        else if (command_id == GET_STACK_DUMP)
+        {
+            first_key = data[2];
+            first_value_length = (((data[3] << 8) | data[4]) & 0x1FF);
+            //  get_stack_dump_command_resolve(first_key);
+        }
+        else if (command_id == BLUETOOTH_LOG_COMMAND_ID)
+        {
+            first_key = data[2];
+            //    resolve_log_command_id((log_command_key_t)first_key);
+        }
+    }
+    break;
+    case PRIVATE_BOND_SUCCESS:
+    { // bond success
+
+        // resolve other command
+        switch (command_id)
+        {
+        case FIRMWARE_UPDATE_CMD_ID:
+            first_key = data[2];
+            resolve_firmware_update_command((FIRMWARE_UPDATE_KEY)first_key);
             break;
-        case PRIVATE_BOND_SUCCESS: { //bond success
+            /****************************************************************************************************
+            //should not resolve bond command
+            case BOND_COMMAND_ID:
+                               first_key = data[2];
+                               first_value_length = (((data[3]<< 8) |data[4]) & 0x1FF);
 
-                //resolve other command
-                switch (command_id) {
-                    case FIRMWARE_UPDATE_CMD_ID:
-                        first_key = data[2];
-                        resolve_firmware_update_command((FIRMWARE_UPDATE_KEY)first_key);
-                        break;
-                        /****************************************************************************************************
-                        //should not resolve bond command
-                        case BOND_COMMAND_ID:
-                                           first_key = data[2];
-                                           first_value_length = (((data[3]<< 8) |data[4]) & 0x1FF);
+                               resolve_private_bond_command(first_key,data+ L2_FIRST_VALUE_POS,first_value_length);
+                               break;
+            *********************************************************************************************************/
+        case SET_CONFIG_COMMAND_ID:
 
-                                           resolve_private_bond_command(first_key,data+ L2_FIRST_VALUE_POS,first_value_length);
-                                           break;
-                        *********************************************************************************************************/
-                    case SET_CONFIG_COMMAND_ID:
-
-                        first_key = data[2];
-                        first_value_length = (((data[3]<< 8) |data[4]) & 0x1FF);
-                        // here not handle the ret value
-              //          resolve_settings_config_command(first_key,data+ L2_FIRST_VALUE_POS,first_value_length);
-                        break;
-                    case NOTIFY_COMMAND_ID:
-                        first_key = data[2];
-                        first_value_length = (((data[3]<< 8) |data[4]) & 0x1FF);
-                        // here not handle the ret value
-                        resolve_notify_command(first_key,data+ L2_FIRST_VALUE_POS,first_value_length);
-                        break;
+            first_key = data[2];
+            first_value_length = (((data[3] << 8) | data[4]) & 0x1FF);
+            // here not handle the ret value
+            //          resolve_settings_config_command(first_key,data+ L2_FIRST_VALUE_POS,first_value_length);
+            break;
+        case NOTIFY_COMMAND_ID:
+            first_key = data[2];
+            first_value_length = (((data[3] << 8) | data[4]) & 0x1FF);
+            // here not handle the ret value
+            resolve_notify_command(first_key, data + L2_FIRST_VALUE_POS, first_value_length);
+            break;
 #ifdef TESTFLASH
 
-                    case TEST_FLASH_READ_WRITE:
-                        first_key = data[2];
-                        first_value_length = (((data[3]<< 8) |data[4]) & 0x1FF);
+        case TEST_FLASH_READ_WRITE:
+            first_key = data[2];
+            first_value_length = (((data[3] << 8) | data[4]) & 0x1FF);
 
-                        resolve_test_flash_command(first_key,data+ L2_FIRST_VALUE_POS,first_value_length);
-                        break;
+            resolve_test_flash_command(first_key, data + L2_FIRST_VALUE_POS, first_value_length);
+            break;
 #endif
 
-                    case HEALTH_DATA_COMMAND_ID:
+        case HEALTH_DATA_COMMAND_ID:
 #ifdef DEBUG_LOG
 
-                        {
-                            LOG(LEVEL_INFO,"len:%d - %d:%d:%d \n",length,data[4],data[5],data[6]);
-                            //    char str[32];
-                            //    sprintf(str,"len:%d - %d:%d:%d \t",length,data[4],data[5],data[6]);
-                            //     simple_uart_putstring((const uint8_t *)str);
-                        }
+        {
+            LOG(LEVEL_INFO, "len:%d - %d:%d:%d \n", length, data[4], data[5], data[6]);
+            //    char str[32];
+            //    sprintf(str,"len:%d - %d:%d:%d \t",length,data[4],data[5],data[6]);
+            //     simple_uart_putstring((const uint8_t *)str);
+        }
 #endif
-                        first_key = data[2];
-                        first_value_length = (((data[3]<< 8) |data[4]) & 0x1FF);
-//                        resolve_HealthData_command(first_key,data+ L2_FIRST_VALUE_POS,first_value_length);
-                        break;
-                    case BLUETOOTH_LOG_COMMAND_ID:
-                        first_key = data[2];
-                     //   resolve_log_command_id((log_command_key_t)first_key);
-                        break;
-                    case TEST_COMMAND_ID:
-                        if(length == 1) {
-                            switch (data[3]) {
-                                case 1:
-                                 //   led_action_control(NOTIFICATION_TEST,SERIAL_FLASH,1);
-                                    break;
-                                case 2:
-                                 //   led_action_control(NOTIFICATION_TEST,SERIAL_CLOSE,1);
-                                    break;
-                                case 3:
-                                  //  led_action_control(NOTIFICATION_TEST,CELEBRATE,1);
-                                    break;
-                                default:
-                                    break;
-                            }
-
-                        }
-                        break;
-                        /*********************************************************************************************
-                         //should not resolve factory test command
-                          case FACTORY_TEST_COMMAND_ID:
-                          {
-                           uint16_t offset = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE;
-                           //     uint16_t payload = 0;
-                           uint16_t v_length = 0;
-                           uint8_t *key = data + L2_HEADER_SIZE;
-                           while(length - offset >= 0){
-                            v_length = ((*(key + 1)) << 8) + (*(key + 2));
-
-                            do_test(key, v_length);
-                            key += (v_length + L2_PAYLOAD_HEADER_SIZE);
-                            offset = offset + v_length + L2_PAYLOAD_HEADER_SIZE;
-                           }
-                          }
-                          break;
-                         ************************************************************************************************/
-                    default:
-                        break;
+            first_key = data[2];
+            first_value_length = (((data[3] << 8) | data[4]) & 0x1FF);
+            //                        resolve_HealthData_command(first_key,data+ L2_FIRST_VALUE_POS,first_value_length);
+            break;
+        case BLUETOOTH_LOG_COMMAND_ID:
+            first_key = data[2];
+            //   resolve_log_command_id((log_command_key_t)first_key);
+            break;
+        case TEST_COMMAND_ID:
+            if (length == 1)
+            {
+                switch (data[3])
+                {
+                case 1:
+                    //   led_action_control(NOTIFICATION_TEST,SERIAL_FLASH,1);
+                    break;
+                case 2:
+                    //   led_action_control(NOTIFICATION_TEST,SERIAL_CLOSE,1);
+                    break;
+                case 3:
+                    //  led_action_control(NOTIFICATION_TEST,CELEBRATE,1);
+                    break;
+                default:
+                    break;
                 }
             }
             break;
-    }
+            /*********************************************************************************************
+             //should not resolve factory test command
+              case FACTORY_TEST_COMMAND_ID:
+              {
+               uint16_t offset = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE;
+               //     uint16_t payload = 0;
+               uint16_t v_length = 0;
+               uint8_t *key = data + L2_HEADER_SIZE;
+               while(length - offset >= 0){
+                v_length = ((*(key + 1)) << 8) + (*(key + 2));
 
+                do_test(key, v_length);
+                key += (v_length + L2_PAYLOAD_HEADER_SIZE);
+                offset = offset + v_length + L2_PAYLOAD_HEADER_SIZE;
+               }
+              }
+              break;
+             ************************************************************************************************/
+        default:
+            break;
+        }
+    }
+    break;
+    }
 
     /*resolve complete and restart receive*/
     *resolve_state = WAIT_START;
     return NRF_SUCCESS;
-
 }
 
 /******************************************************************************
-* direct send response package without any sync op
-*******************************************************************************/
-static L1Header_t* construct_response_package(uint16_t sequence_id, bool check_success)
+ * direct send response package without any sync op
+ *******************************************************************************/
+static L1Header_t *construct_response_package(uint16_t sequence_id, bool check_success)
 {
     static L1Header_t response_header;
     L1_version_value_t version_ack;
-
 
     response_header.magic = L1_HEADER_MAGIC;
 
@@ -1453,38 +1497,36 @@ static L1Header_t* construct_response_package(uint16_t sequence_id, bool check_s
     version_ack.version_def.err_flag = (check_success ? 0 : 1);
     version_ack.version_def.reserve = 0;
 
-    response_header.version =  version_ack.value;
+    response_header.version = version_ack.value;
     response_header.payload_len = 0;
     response_header.crc16 = 0;
-    response_header.sequence_id = ((sequence_id & 0xFF) << 8) | ((sequence_id >> 8) & 0xFF); //big engian
+    response_header.sequence_id = ((sequence_id & 0xFF) << 8) | ((sequence_id >> 8) & 0xFF); // big engian
 
     return &response_header;
 }
 
 /*************************************************************************
-* L1 receive a package and will send a response
-* para des:
-*               sequence_id : the received sequence id
-*               check_success: crc check result
-**************************************************************************/
+ * L1 receive a package and will send a response
+ * para des:
+ *               sequence_id : the received sequence id
+ *               check_success: crc check result
+ **************************************************************************/
 uint32_t L1_receive_response(uint16_t sequence_id, bool check_success)
 {
-    //just use the new response request update the older one
-    g_ack_package_buffer.check_success = (check_success == true) ? 1 :0;
+    // just use the new response request update the older one
+    g_ack_package_buffer.check_success = (check_success == true) ? 1 : 0;
     g_ack_package_buffer.sequence_id = sequence_id;
     g_ack_package_buffer.isUsed = 1;
 
-
-    schedule_async_send(&g_ack_package_buffer,TASK_ACK);
+    schedule_async_send(&g_ack_package_buffer, TASK_ACK);
     return NRF_SUCCESS;
 }
 
-
 /*************************************************************************
-* receive bad package
-* This function used to schedule crc error callback
-**************************************************************************/
-void schedule_crc_error_handle(void * para,uint16_t event_size)
+ * receive bad package
+ * This function used to schedule crc error callback
+ **************************************************************************/
+void schedule_crc_error_handle(void *para, uint16_t event_size)
 {
     para = para;
     event_size = event_size;
@@ -1493,17 +1535,17 @@ void schedule_crc_error_handle(void * para,uint16_t event_size)
 }
 
 /*************************************************************************
-* check the crc16 value for the received package
-**************************************************************************/
-static uint32_t L1_crc_check(uint16_t crc_value,uint8_t *data,uint16_t length)
+ * check the crc16 value for the received package
+ **************************************************************************/
+static uint32_t L1_crc_check(uint16_t crc_value, uint8_t *data, uint16_t length)
 {
-    uint16_t crc = bd_crc16(0x0000,data,length);
-    if(crc == crc_value) {
+    uint16_t crc = bd_crc16(0x0000, data, length);
+    if (crc == crc_value)
+    {
         return NRF_SUCCESS;
     }
 
     return NRF_ERROR_INVALID_DATA;
-
 }
 
 static RECEIVE_STATE receive_state = WAIT_START;
@@ -1512,152 +1554,166 @@ static uint16_t received_content_length = 0;
 static int16_t length_to_receive;
 //////////////////////////////////////////////////////////////////////////
 /*****************************************************************************
-* received content
-*****************************************************************************/
-void L1_receive_data(uint8_t * data, uint16_t length)
+ * received content
+ *****************************************************************************/
+void L1_receive_data(uint8_t *data, uint16_t length)
 {
 
     app_timer_stop(receive_time_out_timer);
 
     L1_version_value_t inner_version;
 
-    switch (receive_state) 
-		{
-        case WAIT_START:    // we need package start
-				{
-            if(data[0] != L1_HEADER_MAGIC) {
-                //not a start package, so just igore
-                break;
+    switch (receive_state)
+    {
+    case WAIT_START: // we need package start
+    {
+        if (data[0] != L1_HEADER_MAGIC)
+        {
+            // not a start package, so just igore
+            break;
+        }
+
+        // get correct header
+        received_content_length = 0;
+
+        memcpy(&received_buffer[received_content_length], data, length);
+
+        received_content_length = length;
+
+        length_to_receive = (received_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] | (received_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] << 8)) + L1_HEADER_SIZE;
+
+        length_to_receive -= length;
+
+        if (length_to_receive <= 0)
+        { // just one package
+
+            inner_version.value = received_buffer[L1_HEADER_PROTOCOL_VERSION_POS];
+
+            if (inner_version.version_def.ack_flag == RESPONSE_PACKAGE)
+            { // response package
+
+                NRF_LOG_INFO("receive a ack package\n");
+
+                receive_state = WAIT_START; // restart receive state machine
+
+                response_package_handle((received_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] |
+                                         (received_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)),
+                                        inner_version.version_def.err_flag);
+                return;
             }
-						
-            //get correct header
+
+            // data package
+            receive_state = MESSAGE_RESOLVE;
             received_content_length = 0;
-						
-            memcpy(&received_buffer[received_content_length],data,length);
-						
-            received_content_length = length;
 
-            length_to_receive = (received_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] | (received_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] << 8)) + L1_HEADER_SIZE;
-            
-						length_to_receive -= length;
+            uint16_t crc16_value = (received_buffer[L1_HEADER_CRC16_HIGH_BYTE_POS] << 8 | received_buffer[L1_HEADER_CRC16_LOW_BYTE_POS]);
 
-            if(length_to_receive <= 0) { // just one package
-
-                inner_version.value = received_buffer[L1_HEADER_PROTOCOL_VERSION_POS];
-
-                if(inner_version.version_def.ack_flag == RESPONSE_PACKAGE) { //response package
-
-                    NRF_LOG_INFO("receive a ack package\n");
-
-                    receive_state = WAIT_START; //restart receive state machine
-									
-                    response_package_handle((received_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] | \
-									                          (received_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)),\
-									                           inner_version.version_def.err_flag);
-                    return;
-                }
-
-                //data package
-                receive_state = MESSAGE_RESOLVE;
-                received_content_length = 0;
-
-                uint16_t crc16_value = (received_buffer[L1_HEADER_CRC16_HIGH_BYTE_POS] << 8 | received_buffer[L1_HEADER_CRC16_LOW_BYTE_POS]);
-								
-                if(L1_crc_check(crc16_value,received_buffer+L1_HEADER_SIZE,(received_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] | (received_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] << 8))) == NRF_SUCCESS) { //check crc for received package
-                    NRF_LOG_INFO("will send success response\n");
-                    //send response
-                    L1_receive_response((received_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] | (received_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)),true);
-                    /*throw data to uppder layer*/
-                    L2_frame_resolve(received_buffer+L1_HEADER_SIZE,(received_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] | (received_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] << 8)),&receive_state);
-                } else { //receive bad package
-                    //restart receive state machine
-                    receive_state = WAIT_START;
-
-                    NRF_LOG_INFO("will send crc fail response\n");
-                    //send response
-                    L1_receive_response((received_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] | (received_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)),false);
-                    //schedule error handler
-                   // app_sched_event_put(NULL,0, schedule_crc_error_handle);
-                    return;
-                }
-
-            } else { // more than one package
-
-                receive_state = WAIT_MESSAGE;
-
-                app_timer_start(receive_time_out_timer, RECEIVE_TIMEOUT, &receive_state);
+            if (L1_crc_check(crc16_value, received_buffer + L1_HEADER_SIZE, (received_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] | (received_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] << 8))) == NRF_SUCCESS)
+            { // check crc for received package
+                NRF_LOG_INFO("will send success response\n");
+                // send response
+                L1_receive_response((received_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] | (received_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)), true);
+                /*throw data to uppder layer*/
+                L2_frame_resolve(received_buffer + L1_HEADER_SIZE, (received_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] | (received_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] << 8)), &receive_state);
             }
-					}
-          break;
-					
-        case WAIT_MESSAGE:
-				{
-            memcpy(&received_buffer[received_content_length],data,length);
-            received_content_length += length;
-            length_to_receive -= length;
+            else
+            { // receive bad package
+                // restart receive state machine
+                receive_state = WAIT_START;
 
-            if(length_to_receive <= 0) {
-
-                /* Stop timer */
-                inner_version.value = received_buffer[L1_HEADER_PROTOCOL_VERSION_POS];
-
-                if(inner_version.version_def.ack_flag == RESPONSE_PACKAGE) { //response package
-                    receive_state = WAIT_START; //restart receive state machine
-                    response_package_handle((received_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] | (received_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)),inner_version.version_def.err_flag);
-                    return;
-                }
-
-                receive_state = MESSAGE_RESOLVE;
-                received_content_length = 0;
-
-                uint16_t crc16_value = (received_buffer[L1_HEADER_CRC16_HIGH_BYTE_POS] << 8 | received_buffer[L1_HEADER_CRC16_LOW_BYTE_POS]);
-                if(L1_crc_check(crc16_value,received_buffer+L1_HEADER_SIZE,(received_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] | (received_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] << 8))) == NRF_SUCCESS) { //check crc for received package
-                    NRF_LOG_INFO("will send success response\n");
-                    //send response
-                    L1_receive_response((received_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] | (received_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)),true);
-                    /*throw data to uppder layer*/
-                    L2_frame_resolve(received_buffer+L1_HEADER_SIZE,(received_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] | (received_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] << 8)),&receive_state);
-                } else { //receive bad package
-                    //restart receive state machine
-                    receive_state = WAIT_START;
-
-                    NRF_LOG_INFO("will send crc fail response\n");
-                    //send response
-                    L1_receive_response((received_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] | (received_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)),false);
-                    //schedule error handler
-                   // app_sched_event_put(NULL,0, schedule_crc_error_handle);
-                    return;
-                }
-
-            } else {
-                /* start receive time out timer */
-                app_timer_start(receive_time_out_timer,RECEIVE_TIMEOUT,&receive_state);
+                NRF_LOG_INFO("will send crc fail response\n");
+                // send response
+                L1_receive_response((received_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] | (received_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)), false);
+                // schedule error handler
+                // app_sched_event_put(NULL,0, schedule_crc_error_handle);
+                return;
             }
-					}
-            break;
+        }
+        else
+        { // more than one package
 
-        case MESSAGE_RESOLVE:
-            //in this situation , can only receive a ack package
-            //Note: ack package must small than 20 bytes
+            receive_state = WAIT_MESSAGE;
 
-            inner_version.value = data[L1_HEADER_PROTOCOL_VERSION_POS];
-            if(inner_version.version_def.ack_flag == RESPONSE_PACKAGE) { //response package
-                NRF_LOG_INFO("receive a ack package during MESSAGE_RESOLVE\n");
+            app_timer_start(receive_time_out_timer, RECEIVE_TIMEOUT, &receive_state);
+        }
+    }
+    break;
 
-                response_package_handle((data[L1_HEADER_SEQ_ID_LOW_BYTE_POS] | (data[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)),inner_version.version_def.err_flag);
+    case WAIT_MESSAGE:
+    {
+        memcpy(&received_buffer[received_content_length], data, length);
+        received_content_length += length;
+        length_to_receive -= length;
+
+        if (length_to_receive <= 0)
+        {
+
+            /* Stop timer */
+            inner_version.value = received_buffer[L1_HEADER_PROTOCOL_VERSION_POS];
+
+            if (inner_version.version_def.ack_flag == RESPONSE_PACKAGE)
+            {                               // response package
+                receive_state = WAIT_START; // restart receive state machine
+                response_package_handle((received_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] | (received_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)), inner_version.version_def.err_flag);
+                return;
             }
 
-            /* because there's no buffer to contain these data, so just ignore these package */
+            receive_state = MESSAGE_RESOLVE;
+            received_content_length = 0;
 
-            break;
-        default:
-            break;
+            uint16_t crc16_value = (received_buffer[L1_HEADER_CRC16_HIGH_BYTE_POS] << 8 | received_buffer[L1_HEADER_CRC16_LOW_BYTE_POS]);
+            if (L1_crc_check(crc16_value, received_buffer + L1_HEADER_SIZE, (received_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] | (received_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] << 8))) == NRF_SUCCESS)
+            { // check crc for received package
+                NRF_LOG_INFO("will send success response\n");
+                // send response
+                L1_receive_response((received_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] | (received_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)), true);
+                /*throw data to uppder layer*/
+                L2_frame_resolve(received_buffer + L1_HEADER_SIZE, (received_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] | (received_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] << 8)), &receive_state);
+            }
+            else
+            { // receive bad package
+                // restart receive state machine
+                receive_state = WAIT_START;
+
+                NRF_LOG_INFO("will send crc fail response\n");
+                // send response
+                L1_receive_response((received_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] | (received_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)), false);
+                // schedule error handler
+                // app_sched_event_put(NULL,0, schedule_crc_error_handle);
+                return;
+            }
+        }
+        else
+        {
+            /* start receive time out timer */
+            app_timer_start(receive_time_out_timer, RECEIVE_TIMEOUT, &receive_state);
+        }
+    }
+    break;
+
+    case MESSAGE_RESOLVE:
+        // in this situation , can only receive a ack package
+        // Note: ack package must small than 20 bytes
+
+        inner_version.value = data[L1_HEADER_PROTOCOL_VERSION_POS];
+        if (inner_version.version_def.ack_flag == RESPONSE_PACKAGE)
+        { // response package
+            NRF_LOG_INFO("receive a ack package during MESSAGE_RESOLVE\n");
+
+            response_package_handle((data[L1_HEADER_SEQ_ID_LOW_BYTE_POS] | (data[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)), inner_version.version_def.err_flag);
+        }
+
+        /* because there's no buffer to contain these data, so just ignore these package */
+
+        break;
+    default:
+        break;
     }
 }
 
 /******************************************************************
-* to control whether to check dev loss when bluetooth disconnected   
-*******************************************************************/
+ * to control whether to check dev loss when bluetooth disconnected
+ *******************************************************************/
 static bool should_checkdev_loss_on_disconnect = false;
 
 bool get_should_checkdev_loss_on_disconnect(void)
@@ -1674,15 +1730,16 @@ uint32_t bluetooth_l0_reset(void)
 {
     uint32_t i = 0;
 
-    //first stop async send event
+    // first stop async send event
     SendCompletePara sendPara;
     sendPara.callback = NULL;
     sendPara.context = NULL;
     sendPara.task_type = TASK_NONE;
     set_complete_callback(sendPara);
 
-    //reset L2_frame_resolve machine
-    if(private_bond_machine == PRIVATE_BOND_SUCCESS) {//bluetooth disconnected from bonded state so should check dev loss
+    // reset L2_frame_resolve machine
+    if (private_bond_machine == PRIVATE_BOND_SUCCESS)
+    { // bluetooth disconnected from bonded state so should check dev loss
         set_should_checkdev_loss_on_disconnect(true);
     }
 
@@ -1693,15 +1750,17 @@ uint32_t bluetooth_l0_reset(void)
     current_task_type = TASK_NONE;
     next_task_type = TASK_NONE;
 
-
-    for( ; i< MAX_SEND_TASK; ++i) {
+    for (; i < MAX_SEND_TASK; ++i)
+    {
         sendContent[i].isUsed = 0;
         sendContent[i].resendCount = 0;
     }
 
-    if(NULL != current_package_wait_response) {
+    if (NULL != current_package_wait_response)
+    {
         current_package_wait_response->isUsed = 0;
-        if(current_package_wait_response->callback) {
+        if (current_package_wait_response->callback)
+        {
             current_package_wait_response->callback(SEND_FAIL);
         }
     }
@@ -1710,19 +1769,18 @@ uint32_t bluetooth_l0_reset(void)
     received_content_length = 0;
     length_to_receive = 0;
 
-    //disalbe bluetooth log when bluetooth disconnect
- //   set_bluetooth_log_state(false);
+    // disalbe bluetooth log when bluetooth disconnect
+    //   set_bluetooth_log_state(false);
 
-    memset(&g_ack_package_buffer,0,sizeof(struct Response_Buff_Type_t));
+    memset(&g_ack_package_buffer, 0, sizeof(struct Response_Buff_Type_t));
 
+    //  if(app_query_timer(delay_send_wait_timer) == NRF_SUCCESS) {
+    app_timer_stop(delay_send_wait_timer);
+    //  }
 
-  //  if(app_query_timer(delay_send_wait_timer) == NRF_SUCCESS) {
-        app_timer_stop(delay_send_wait_timer);
-  //  }
-
-  //  if(app_query_timer(receive_time_out_timer) == NRF_SUCCESS) {
-        app_timer_stop(receive_time_out_timer);
- //   }
+    //  if(app_query_timer(receive_time_out_timer) == NRF_SUCCESS) {
+    app_timer_stop(receive_time_out_timer);
+    //   }
 
     return NRF_SUCCESS;
 }

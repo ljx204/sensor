@@ -1,7 +1,7 @@
 /*
     liujian
-		
-		2024/4/26
+
+    2024/4/26
 
 */
 
@@ -9,7 +9,5 @@
 #define __APP_DFU_H__
 
 void app_dfu_service_init(void);
-
-	
 
 #endif

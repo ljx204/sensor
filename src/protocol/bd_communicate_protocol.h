@@ -1,93 +1,95 @@
-/* 
+/*
  * Date               :   2024/4/24
  * Author             :   liujian
 
  */
- 
+
 #ifndef __COMMUNICATE_PROTOCOL_H__
 #define __COMMUNICATE_PROTOCOL_H__
 
 #include "stdint.h"
 #include "ble_uart.h"
 /**************************************************************************
-* ÓÉÓÚÐ­ÒéÕûÌåÉÏ²ÉÓÃÁË´ó¶Ë¸ñÊ½£¬¶øÇÒ²¿·ÖÊý¾Ý²¢Ã»ÓÐ¿¼ÂÇ¶¨ÒåstructÊ±µÄpading
-* ËùÒÔmemcpy + struct Î»ÓòµÄ·½Ê½Ã»ÓÐÓÅÊÆ,ÊµÏÖÉÏÃ»ÓÐÏêÏ¸¶¨Òåstruct,ºÜ¶àµØ·½
-* ÓÃ³£ÊýºÍÒÆÎ»À´ÊµÏÖ
-***************************************************************************/
+ * ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï²ï¿½ï¿½ï¿½ï¿½Ë´ï¿½Ë¸ï¿½Ê½ï¿½ï¿½ï¿½ï¿½ï¿½Ò²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý²ï¿½Ã»ï¿½Ð¿ï¿½ï¿½Ç¶ï¿½ï¿½ï¿½structÊ±ï¿½ï¿½pading
+ * ï¿½ï¿½ï¿½ï¿½memcpy + struct Î»ï¿½ï¿½Ä·ï¿½Ê½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,Êµï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½ï¿½ï¿½struct,ï¿½Ü¶ï¿½Ø·ï¿½
+ * ï¿½Ã³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½Êµï¿½ï¿½
+ ***************************************************************************/
 
-#define   WAIT_BOND_COMMAND_TIMEOUT        APP_TIMER_TICKS(300000,APP_TIMER_PRESCALER)
+#define WAIT_BOND_COMMAND_TIMEOUT APP_TIMER_TICKS(300000, APP_TIMER_PRESCALER)
 
 /******************* Macro defination *************************************/
-                           //0xAB ÊÇ°Ù¶ÈÔ­À´µÄ 0xAD ÖÇÄÜ½äÖ¸
-#define L1_HEADER_MAGIC    (0xAD)     /*header magic number */   
-#define L1_HEADER_VERSION  (0x00)     /*protocol version */
-#define L1_HEADER_SIZE     (8)        /*L1 header length*/
+// 0xAB ï¿½Ç°Ù¶ï¿½Ô­ï¿½ï¿½ï¿½ï¿½ 0xAD ï¿½ï¿½ï¿½Ü½ï¿½Ö¸
+#define L1_HEADER_MAGIC (0xAD)   /*header magic number */
+#define L1_HEADER_VERSION (0x00) /*protocol version */
+#define L1_HEADER_SIZE (8)       /*L1 header length*/
 
 /**************************************************************************
-* define L1 header byte order
-***************************************************************************/
-#define L1_HEADER_MAGIC_POS             (0)
-#define L1_HEADER_PROTOCOL_VERSION_POS  (1)
-#define L1_PAYLOAD_LENGTH_HIGH_BYTE_POS (2)         /* L1 payload lengh high byte */
-#define L1_PAYLOAD_LENGTH_LOW_BYTE_POS  (3)
-#define L1_HEADER_CRC16_HIGH_BYTE_POS   (4)
-#define L1_HEADER_CRC16_LOW_BYTE_POS    (5)
-#define L1_HEADER_SEQ_ID_HIGH_BYTE_POS  (6)
-#define L1_HEADER_SEQ_ID_LOW_BYTE_POS   (7)
-
+ * define L1 header byte order
+ ***************************************************************************/
+#define L1_HEADER_MAGIC_POS (0)
+#define L1_HEADER_PROTOCOL_VERSION_POS (1)
+#define L1_PAYLOAD_LENGTH_HIGH_BYTE_POS (2) /* L1 payload lengh high byte */
+#define L1_PAYLOAD_LENGTH_LOW_BYTE_POS (3)
+#define L1_HEADER_CRC16_HIGH_BYTE_POS (4)
+#define L1_HEADER_CRC16_LOW_BYTE_POS (5)
+#define L1_HEADER_SEQ_ID_HIGH_BYTE_POS (6)
+#define L1_HEADER_SEQ_ID_LOW_BYTE_POS (7)
 
 /********************************************************************************
-* define version response
-*********************************************************************************/
-typedef enum {
+ * define version response
+ *********************************************************************************/
+typedef enum
+{
     DATA_PACKAGE = 0,
-    RESPONSE_PACKAGE =  1,
-}L1_PACKAGE_TYPE;
+    RESPONSE_PACKAGE = 1,
+} L1_PACKAGE_TYPE;
 
 /********************************************************************************
-* define ack or nak
-*********************************************************************************/
-typedef enum {
+ * define ack or nak
+ *********************************************************************************/
+typedef enum
+{
     ACK = 0,
     NAK = 1,
-}L1_ERROR_FLAG;
+} L1_ERROR_FLAG;
 
 /*******************************************************************************
-* debvice loss alert level
-********************************************************************************/
-typedef enum {
+ * debvice loss alert level
+ ********************************************************************************/
+typedef enum
+{
     NO_ALERT = 0,
     MIDDLE_ALERT = 1,
     HIGH_ALERT = 2
 } DEV_LOSS_ALERT_LEVEL;
 
-#define L2_HEADER_SIZE   (2)      /*L2 header length*/
-#define L2_HEADER_VERSION (0x00)     /*L2 header version*/
-#define L2_KEY_SIZE         (1)
-#define L2_PAYLOAD_HEADER_SIZE (3)        /*L2 payload header*/
+#define L2_HEADER_SIZE (2)       /*L2 header length*/
+#define L2_HEADER_VERSION (0x00) /*L2 header version*/
+#define L2_KEY_SIZE (1)
+#define L2_PAYLOAD_HEADER_SIZE (3) /*L2 payload header*/
 
 #define L2_FIRST_VALUE_POS (L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE)
 /*****************************************/
-#define L1L2_HEAD_LEN  (5)
+#define L1L2_HEAD_LEN (5)
 
-#define SPORT_HEAD_LEN (L1L2_HEAD_LEN+4)
+#define SPORT_HEAD_LEN (L1L2_HEAD_LEN + 4)
 
 #define SPOTSMODE_POS (12)
 /*****************************************/
 
 /*********************************************************************
-* individual response buffer
-**********************************************************************/
+ * individual response buffer
+ **********************************************************************/
 struct Response_Buff_Type_t
 {
     uint16_t sequence_id;
-    uint8_t  check_success;
-    uint8_t  isUsed;
+    uint8_t check_success;
+    uint8_t isUsed;
 };
 
-#define MAX_SEND_TASK  (1)      /* for only one buffer */
+#define MAX_SEND_TASK (1) /* for only one buffer */
 
-#define SEND_RETRY_TIMES (10)    /*send retry timers*/
+#define SEND_RETRY_TIMES (10) /*send retry timers*/
 
 /******************* Enum & Struct defination ******************************/
 /* L1 header struct */
@@ -98,27 +100,22 @@ typedef struct
     uint16_t payload_len;
     uint16_t crc16;
     uint16_t sequence_id;
-}
-L1Header_t;
+} L1Header_t;
 
 /*L1 version defination */
 typedef struct
 {
-uint8_t version  :
-    4;
-uint8_t ack_flag  :
-    1;
-uint8_t err_flag  :
-    1;
-uint8_t reserve  :
-    2;
-}
-L1_version_def_t;
+    uint8_t version : 4;
+    uint8_t ack_flag : 1;
+    uint8_t err_flag : 1;
+    uint8_t reserve : 2;
+} L1_version_def_t;
 
-typedef union{
+typedef union
+{
     L1_version_def_t version_def;
     uint8_t value;
-}L1_version_value_t;
+} L1_version_value_t;
 
 enum crc_check_result
 {
@@ -128,24 +125,21 @@ enum crc_check_result
 
 typedef struct
 {
-    uint8_t should_alert;              /* control should alert or not */
+    uint8_t should_alert; /* control should alert or not */
     uint8_t alert_level;
-}
-dev_loss_control_t;
+} dev_loss_control_t;
 
-typedef union {
+typedef union
+{
     uint16_t data;
     dev_loss_control_t controller;
-}dev_loss_control;
+} dev_loss_control;
 
 typedef struct
 {
-uint16_t v_length  :
-    9;
-uint16_t reserve  :
-    7;
-}
-Key_Header_t;
+    uint16_t v_length : 9;
+    uint16_t reserve : 7;
+} Key_Header_t;
 typedef union
 {
     uint16_t data;
@@ -158,71 +152,76 @@ typedef struct
     uint8_t version;
     uint8_t key;
     Key_Header_u key_header;
-}
-L2DataHeader_t;
+} L2DataHeader_t;
 
-typedef enum  {
-    KEY_REQUEST_DATA   = 0x01,
-    KEY_RETURN_SPORTS_DATA  = 0x02,
-    KEY_RETURN_SLEEP_DATA  = 0x03,
-    KEY_MORE    = 0x04,
-    KEY_RETURN_SLEEP_SETTING= 0x05,
-    KEY_SET_STEPS_NOTIFY =0x06,
-    KEY_DATA_SYNC_START= 0x07,
-    KEY_DATA_SYNC_END =0x08,
+typedef enum
+{
+    KEY_REQUEST_DATA = 0x01,
+    KEY_RETURN_SPORTS_DATA = 0x02,
+    KEY_RETURN_SLEEP_DATA = 0x03,
+    KEY_MORE = 0x04,
+    KEY_RETURN_SLEEP_SETTING = 0x05,
+    KEY_SET_STEPS_NOTIFY = 0x06,
+    KEY_DATA_SYNC_START = 0x07,
+    KEY_DATA_SYNC_END = 0x08,
     KEY_DAILY_DATA_SYNC = 0x09,
     KEY_LATEST_DATA_SYNC = 0x0A
 
-}SPORTS_KEY;
-typedef enum  {
-    KEY_TIME_SETTINGS   = 0x01,
-    KEY_ALARM_SETTINGS  = 0x02,
-    KEY_REQUEST_ALARM_SETTINGS  = 0x03,
+} SPORTS_KEY;
+typedef enum
+{
+    KEY_TIME_SETTINGS = 0x01,
+    KEY_ALARM_SETTINGS = 0x02,
+    KEY_REQUEST_ALARM_SETTINGS = 0x03,
     KEY_RETURN_ALARM_SETTINGS = 0x04,
     KEY_STEP_TARGET_SETTINGS = 0x05,
     KEY_PROFILE_SETTINGS = 0x10,
     KEY_DEV_LOSS_ALERT_SETTINGS = 0x20
-}SETTINGS_KEY;
+} SETTINGS_KEY;
 
-typedef enum {
-    KEY_REQUEST_ECHO    = 0x01,
-    KEY_RETURN_ECHO     = 0x02,
-    KEY_REQUEST_CHARGE  = 0x03,
-    KEY_RETURN_CHARGE   = 0x04,
-    KEY_LED_TEST        = 0x05,
-    KEY_VIBRATOR_TEST   = 0x06,
-    KEY_WRITE_SN        = 0x07,
-    KEY_READ_SN         = 0x08,
-    KEY_RETURN_SN       = 0x09,
-    KEY_WRITE_FLAG      = 0x0a,
-    KEY_READ_FLAG       = 0x0b,
-    KEY_RETURN_FLAG     = 0x0c,
-    KEY_REQUEST_SENSOR  = 0x0d,
-    KEY_RETURN_SENSOR   = 0x0e,
+typedef enum
+{
+    KEY_REQUEST_ECHO = 0x01,
+    KEY_RETURN_ECHO = 0x02,
+    KEY_REQUEST_CHARGE = 0x03,
+    KEY_RETURN_CHARGE = 0x04,
+    KEY_LED_TEST = 0x05,
+    KEY_VIBRATOR_TEST = 0x06,
+    KEY_WRITE_SN = 0x07,
+    KEY_READ_SN = 0x08,
+    KEY_RETURN_SN = 0x09,
+    KEY_WRITE_FLAG = 0x0a,
+    KEY_READ_FLAG = 0x0b,
+    KEY_RETURN_FLAG = 0x0c,
+    KEY_REQUEST_SENSOR = 0x0d,
+    KEY_RETURN_SENSOR = 0x0e,
     KEY_ENTER_TEST_MODE = 0x10,
-    KEY_EXIT_TEST_MODE  = 0x11,
-}FACTORY_TEST_KEY;
+    KEY_EXIT_TEST_MODE = 0x11,
+} FACTORY_TEST_KEY;
 
-typedef enum {
-    KEY_ENTER_FIRMWARE_UPDATE_MODE  = 0x01,
-    KEY_ENTER_DFU_MODE_RET          = 0x02,
-    KEY_GET_FIRMWARE_VERSION_INFO   = 0x11,
-    KEY_RET_FIRMWARE_VERSION_INFO   = 0x12,
-}FIRMWARE_UPDATE_KEY;
+typedef enum
+{
+    KEY_ENTER_FIRMWARE_UPDATE_MODE = 0x01,
+    KEY_ENTER_DFU_MODE_RET = 0x02,
+    KEY_GET_FIRMWARE_VERSION_INFO = 0x11,
+    KEY_RET_FIRMWARE_VERSION_INFO = 0x12,
+} FIRMWARE_UPDATE_KEY;
 
-typedef enum {
+typedef enum
+{
     DO_BOND = 0,
     DO_WAIT_BOND_COMMAND = 1
-}USER_TIMER_COMMAND_t;
+} USER_TIMER_COMMAND_t;
 
-
-typedef enum{
+typedef enum
+{
     PRIVATE_NOT_BOND = 0,
     PRIVATE_BOND_SUCCESS = 1
 } BLUETOOTH_BOND_STATE;
 
 /* Command ID */
-typedef enum {
+typedef enum
+{
     FIRMWARE_UPDATE_CMD_ID = 0x01,
     SET_CONFIG_COMMAND_ID = 0x02,
     BOND_COMMAND_ID = 0x03,
@@ -230,110 +229,98 @@ typedef enum {
     HEALTH_DATA_COMMAND_ID = 0x05,
     FACTORY_TEST_COMMAND_ID = 0x06,
     BLUETOOTH_LOG_COMMAND_ID = 0x0a,
-    GET_STACK_DUMP          = 0x10,
+    GET_STACK_DUMP = 0x10,
     TEST_FLASH_READ_WRITE = 0xFE,
     TEST_COMMAND_ID = 0xFF
-}BLUETOOTH_COMMUNICATE_COMMAND;
+} BLUETOOTH_COMMUNICATE_COMMAND;
 
-
-typedef enum  {
+typedef enum
+{
     SEND_SUCCESS = 1,
-    SEND_FAIL   = 0,
-}SEND_STATUS;
+    SEND_FAIL = 0,
+} SEND_STATUS;
 
-typedef enum {
+typedef enum
+{
     WAIT_START = 0,
     WAIT_MESSAGE,
     MESSAGE_RESOLVE
-}RECEIVE_STATE;
+} RECEIVE_STATE;
 
-//async send operation callback
-typedef void (*send_status_callback_t)(SEND_STATUS status );
-
+// async send operation callback
+typedef void (*send_status_callback_t)(SEND_STATUS status);
 
 /****************************************************************
-* sending Buffer use state
-*****************************************************************/
+ * sending Buffer use state
+ *****************************************************************/
 typedef struct
 {
-uint8_t isUsed      :
-    1;
-uint8_t TxComplete  :
-    1;
-uint8_t GetResPack  :
-    1;
-uint8_t reserved    :
-    5;
-}
-SendingBufferUseState_t;
+    uint8_t isUsed : 1;
+    uint8_t TxComplete : 1;
+    uint8_t GetResPack : 1;
+    uint8_t reserved : 5;
+} SendingBufferUseState_t;
 
-typedef union {
+typedef union
+{
     uint8_t data;
     SendingBufferUseState_t usingState;
-}SendingBufferUseState;
+} SendingBufferUseState;
 
 /*Used by L1, used to send whole L1 package throw bluetooth */
 typedef struct
 {
-    uint8_t *         content;   /* content to be send */
-    send_status_callback_t                   callback;   /* send status callback */
-    uint16_t          length;    /* content length */
-    uint16_t             contentLeft;     /* content left for send*/
-    uint16_t         sequence_id;        /* sequence id for this package*/
-    uint8_t                         isUsed;    /* is the current struct used*/
-    uint8_t             resendCount;     /* whole L1 package resend count */
-}
-L1_Send_Content;
+    uint8_t *content;                /* content to be send */
+    send_status_callback_t callback; /* send status callback */
+    uint16_t length;                 /* content length */
+    uint16_t contentLeft;            /* content left for send*/
+    uint16_t sequence_id;            /* sequence id for this package*/
+    uint8_t isUsed;                  /* is the current struct used*/
+    uint8_t resendCount;             /* whole L1 package resend count */
+} L1_Send_Content;
 
 /*used by L2, To describe the L2 content to be send */
 typedef struct
 {
-    uint8_t *         content;   /* content to be send */
-    send_status_callback_t   callback;   /* send status callback */
-    uint16_t          length;    /* content length */
-}
-L2_Send_Content;
+    uint8_t *content;                /* content to be send */
+    send_status_callback_t callback; /* send status callback */
+    uint16_t length;                 /* content length */
+} L2_Send_Content;
 
-typedef enum {
+typedef enum
+{
     CONTENT_NONE = 0,
     CONTENT_HEADER = 1,
     CONTENT_DATA = 2,
     CONTENT_ACK = 3
-}SEND_CONTENT_TYPE_T;
+} SEND_CONTENT_TYPE_T;
 
 /***********************************************************************
-* This enum describe the current task type
-************************************************************************/
-typedef enum {
+ * This enum describe the current task type
+ ************************************************************************/
+typedef enum
+{
     TASK_NONE = 0,
     TASK_DATA = 1,
     TASK_ACK = 2
-}SEND_TASK_TYPE_T;
+} SEND_TASK_TYPE_T;
 
 typedef struct
 {
-    L1_Send_Content * content;
-    uint16_t        isUsed;
-}
-L1_Header_Schedule_type_t;
+    L1_Send_Content *content;
+    uint16_t isUsed;
+} L1_Header_Schedule_type_t;
 
 /* time bit field */
 typedef struct
 {
-uint32_t seconds  :
-    6;
-uint32_t minute  :
-    6;
-uint32_t hours  :
-    5;
-uint32_t day   :
-    5;
-uint32_t month  :
-    4;
-uint32_t year   :
-    6;
-}
-time_bit_field_type_t;
+    uint32_t seconds : 6;
+    uint32_t minute : 6;
+    uint32_t hours : 5;
+    uint32_t day : 5;
+    uint32_t month : 4;
+    uint32_t year : 6;
+} time_bit_field_type_t;
 
 typedef union
 {
@@ -343,40 +330,40 @@ typedef union
 /* time bit field */
 
 /* Definend for send callback */
-typedef void (*send_complete_callback_t)(void *context,SEND_TASK_TYPE_T type);
+typedef void (*send_complete_callback_t)(void *context, SEND_TASK_TYPE_T type);
 
-typedef  struct
+typedef struct
 {
     send_complete_callback_t callback;
 
-  	void * context;
-  
+    void *context;
+
     SEND_TASK_TYPE_T task_type;
 
-}SendCompletePara;
-
+} SendCompletePara;
 
 /* log command and key */
-typedef enum {
-    KEY_ENABLE_BLUETOOTH_LOG    = 0x01,
-    KEY_DISABLE_BLUETOOTH_LOG   = 0x02,
-    KEY_BLUETOOTH_LOG_CONTENT   = 0x03,
-}log_command_key_t;
+typedef enum
+{
+    KEY_ENABLE_BLUETOOTH_LOG = 0x01,
+    KEY_DISABLE_BLUETOOTH_LOG = 0x02,
+    KEY_BLUETOOTH_LOG_CONTENT = 0x03,
+} log_command_key_t;
 
 /******************* Function defination **********************************/
 
 void set_complete_callback(SendCompletePara para);
 /* received data from tx character */
-void L1_receive_data(uint8_t * data, uint16_t length);
+void L1_receive_data(uint8_t *data, uint16_t length);
 
 uint32_t bluetooth_l0_init(void);
 
 uint32_t bluetooth_l0_reset(void);
 
 /*L1 send congtent */
-uint32_t L1_send(L2_Send_Content * content);
+uint32_t L1_send(L2_Send_Content *content);
 
-void send_status_callback(SEND_STATUS status );
+void send_status_callback(SEND_STATUS status);
 
 void bond_success_event_observer(void);
 
@@ -391,6 +378,5 @@ void set_should_checkdev_loss_on_disconnect(bool value);
 bool get_global_should_trigger_ota_flag(void);
 
 void set_global_should_trigger_ota_flag(bool value);
-
 
 #endif //__COMMUNICATE_PROTOCOL_H__
