@@ -522,18 +522,17 @@ void spo2_algorithm_enable(void)
         return;
     }
 
-
     int version = SpO2_Version();
-    DEBUG_PRINT("PxiAlg_Version() = %d\n", version);
+    LOG_PRINT("PxiAlg_Version() = %d\n", version);
         
     uint32_t buffer_size = SpO2_OpenSize();
-    DEBUG_PRINT("SpO2_Open buffer_size = %d \n", buffer_size);
+    LOG_PRINT("SpO2_Open buffer_size = %d \n", buffer_size);
 
     pBuffer = malloc(buffer_size);
         
     if (SpO2_Open(pBuffer) != SPO2_MSG_SUCCESS)
     {
-        DEBUG_PRINT("SpO2_Open() failed. \n");
+        LOG_PRINT("SpO2_Open() failed. \n");
         free(pBuffer);
         return;
     }
@@ -599,17 +598,17 @@ void spo2_algorithm_enable(void)
     // static  Hr-V301009
     PxiAlg_Close();
     version = PxiAlg_Version();
-    DEBUG_PRINT("HR_Version = %d \r\n", version);
+    LOG_PRINT("HR_Version = %d \r\n", version);
         
     
     uint32_t Query_Mem_Size = PxiAlg_Query_Mem_Size();
-    DEBUG_PRINT("HR_Mem_Size = %d \r\n", Query_Mem_Size);
+    LOG_PRINT("HR_Mem_Size = %d \r\n", Query_Mem_Size);
     
     hr_pBuffer = malloc(Query_Mem_Size);
         
     
     if(!PxiAlg_Open_Mem(hr_pBuffer))
-          DEBUG_PRINT("PxiAlg_Open_Mem fail \n");
+          LOG_PRINT("PxiAlg_Open_Mem fail \n");
              
             
     PxiAlg_SetQualityThreshold(0.35f); 
@@ -809,26 +808,26 @@ void spo2_alg_task(void)
                 else
                 {
                     //report_spo2_data(&ppg_mems_data_alg, ret, mySpO2, myHR, correlation, trust_flag, MEMS_RMS,data_buf_count_spo2_alg,  Opt_SpO2, drop_flag, ascend_flag,  mems_flag);
-                    report_spo2_data(&ppg_mems_data_alg, ret, mySpO2, myHR, correlation, trust_flag, MEMS_RMS,data_buf_count_spo2_alg, no_value_reason, SignalPeriodicity, time_accu);
+                   // report_spo2_data(&ppg_mems_data_alg, ret, mySpO2, myHR, correlation, trust_flag, MEMS_RMS,data_buf_count_spo2_alg, no_value_reason, SignalPeriodicity, time_accu);
 
-                    switch (ret_value)
-                    {
-                        case SPO2_MSG_ALG_NOT_OPEN:
-                            DEBUG_PRINT("Algorithm is not initialized. \n");
-                        break;
-                     
-                        case SPO2_MSG_ALG_REOPEN:
-                            DEBUG_PRINT("Algorithm is re initialized. \n");
-                        break;
-                     
-                        case SPO2_MSG_ALG_NOT_SUPPORT:
-                            DEBUG_PRINT("Algorithm is not support. \n");
-                        break;
-                    
-                        default:
-                            DEBUG_PRINT("Algorithm unhandle error = %d \n", ret_value);
-                        break;
-                    }
+//                    switch (ret_value)
+//                    {
+//                        case SPO2_MSG_ALG_NOT_OPEN:
+//                            LOG_PRINT("Algorithm is not initialized. \n");
+//                        break;
+//                     
+//                        case SPO2_MSG_ALG_REOPEN:
+//                            LOG_PRINT("Algorithm is re initialized. \n");
+//                        break;
+//                     
+//                        case SPO2_MSG_ALG_NOT_SUPPORT:
+//                            LOG_PRINT("Algorithm is not support. \n");
+//                        break;
+//                    
+//                        default:
+//                            LOG_PRINT("Algorithm unhandle error = %d \n", ret_value);
+//                        break;
+//                    }
                     //return 1 ;
                 }
             }
@@ -1431,21 +1430,23 @@ static void report_spo2_data(const ppg_mems_data_t *ppg_mems_data_alg, int32_t r
 
   if(data_buf_count_spo2_alg>=25)
     {
-                LOG_PRINT("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %f, %f, %f, %f, %f, %f, %d, %f, %d\n",
-                ppg_mems_data_alg->ppg_frame_count, ppg_mems_data_alg->duration, ppg_mems_data_alg->touch_flag,
-                ppg_mems_data_alg->ppg_data.has_data, ppg_mems_data_alg->ppg_data.has_overflow, ppg_mems_data_alg->ppg_data.overflow_num,
-                ppg_mems_data_alg->ppg_data.data[0], ppg_mems_data_alg->ppg_data.data[1], ppg_mems_data_alg->ppg_data.data[2],
-                ppg_mems_data_alg->ppg_data.exposure_time[0], ppg_mems_data_alg->ppg_data.exposure_time[1], ppg_mems_data_alg->ppg_data.exposure_time[2],
-                (int)(ppg_mems_data_alg->MEMS_Data[0]), (int)(ppg_mems_data_alg->MEMS_Data[1]), (int)(ppg_mems_data_alg->MEMS_Data[2]), ret, mySpO2,myHR,hr_grader,correlation, MEMS_RMS,trust_flag,no_value_reason,SignalPeriodicity, time_accu);
+			           LOG_PRINT("hr = %f  spo2 = %f  hr_grade = %f ", mySpO2, myHR,hr_grader);
+			
+//                LOG_PRINT("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %f, %f, %f, %f, %f, %f, %d, %f, %d\n",
+//                ppg_mems_data_alg->ppg_frame_count, ppg_mems_data_alg->duration, ppg_mems_data_alg->touch_flag,
+//                ppg_mems_data_alg->ppg_data.has_data, ppg_mems_data_alg->ppg_data.has_overflow, ppg_mems_data_alg->ppg_data.overflow_num,
+//                ppg_mems_data_alg->ppg_data.data[0], ppg_mems_data_alg->ppg_data.data[1], ppg_mems_data_alg->ppg_data.data[2],
+//                ppg_mems_data_alg->ppg_data.exposure_time[0], ppg_mems_data_alg->ppg_data.exposure_time[1], ppg_mems_data_alg->ppg_data.exposure_time[2],
+//                (int)(ppg_mems_data_alg->MEMS_Data[0]), (int)(ppg_mems_data_alg->MEMS_Data[1]), (int)(ppg_mems_data_alg->MEMS_Data[2]), ret, mySpO2,myHR,hr_grader,correlation, MEMS_RMS,trust_flag,no_value_reason,SignalPeriodicity, time_accu);
     }
     else
     {
-                LOG_PRINT("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n",
-                ppg_mems_data_alg->ppg_frame_count, ppg_mems_data_alg->duration, ppg_mems_data_alg->touch_flag,
-                ppg_mems_data_alg->ppg_data.has_data, ppg_mems_data_alg->ppg_data.has_overflow, ppg_mems_data_alg->ppg_data.overflow_num,
-                ppg_mems_data_alg->ppg_data.data[0], ppg_mems_data_alg->ppg_data.data[1], ppg_mems_data_alg->ppg_data.data[2],
-                ppg_mems_data_alg->ppg_data.exposure_time[0], ppg_mems_data_alg->ppg_data.exposure_time[1], ppg_mems_data_alg->ppg_data.exposure_time[2],
-                (int)(ppg_mems_data_alg->MEMS_Data[0]), (int)(ppg_mems_data_alg->MEMS_Data[1]), (int)(ppg_mems_data_alg->MEMS_Data[2]), ret);
+//                LOG_PRINT("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n",
+//                ppg_mems_data_alg->ppg_frame_count, ppg_mems_data_alg->duration, ppg_mems_data_alg->touch_flag,
+//                ppg_mems_data_alg->ppg_data.has_data, ppg_mems_data_alg->ppg_data.has_overflow, ppg_mems_data_alg->ppg_data.overflow_num,
+//                ppg_mems_data_alg->ppg_data.data[0], ppg_mems_data_alg->ppg_data.data[1], ppg_mems_data_alg->ppg_data.data[2],
+//                ppg_mems_data_alg->ppg_data.exposure_time[0], ppg_mems_data_alg->ppg_data.exposure_time[1], ppg_mems_data_alg->ppg_data.exposure_time[2],
+//                (int)(ppg_mems_data_alg->MEMS_Data[0]), (int)(ppg_mems_data_alg->MEMS_Data[1]), (int)(ppg_mems_data_alg->MEMS_Data[2]), ret);
 
         
     }
@@ -1503,6 +1504,7 @@ void ppg_sensor_interrupt_process(void *p_event_data, uint16_t event_size)
 {
 	       _main.interrupt_timestamp = pah_get_tick_count();
          process(_main.interrupt_timestamp);
-	       hr_alg_task();
+	   //    hr_alg_task();
+	      spo2_alg_task();
 }
 

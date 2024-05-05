@@ -19,6 +19,7 @@
 
 /******************* Macro defination *************************************/
 // 0xAB �ǰٶ�ԭ���� 0xAD ���ܽ�ָ
+#define L1_SEND_HEADER_MAGIC (0xAB)
 #define L1_HEADER_MAGIC (0xAD)   /*header magic number */
 #define L1_HEADER_VERSION (0x00) /*protocol version */
 #define L1_HEADER_SIZE (8)       /*L1 header length*/

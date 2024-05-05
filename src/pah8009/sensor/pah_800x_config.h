@@ -100,13 +100,14 @@
 If Customer platform use G-Sensor with FIFO,they can refer this flow to run pxi alg to get alg output
 */
 //#define PPG_MEMS_Synchronize
+
 #define Optimize_SPO2_flow
 
 //****** Demo 800X mode Select ******//
 //============HRD-INT================//
 //#define touch_only_hrd_en
 //#define ppg_only_hrd_en
-#define auto_hrd_en
+//#define auto_hrd_en
 
 //============HRD-Polling================//
 //#define touch_only_polling_hrd_en
@@ -117,7 +118,7 @@ If Customer platform use G-Sensor with FIFO,they can refer this flow to run pxi 
 //============SPO2-INT================//
 //#define touch_only_spo2_en
 //#define ppg_only_spo2_en
-//#define auto_spo2_en
+#define auto_spo2_en
 
 //============SPO2-Polling================//
 //#define touch_only_polling_spo2_en

@@ -23,6 +23,10 @@
 #define GLOBAL_RECEIVE_BUFFER_SIZE 100
 #define GLOBAL_RESPONSE_BUFFER_SIZE 200
 
+#define USER_ID_LENGTH     10
+
+uint32_t user_id[(USER_ID_LENGTH - 1) / (4) + 1];
+
 /****************************************************************************
  * Tempory send buffer
  *****************************************************************************/
@@ -183,23 +187,23 @@ static void receive_time_out_handle(void *contenxt)
 /* bonding time out handle */
 static void user_action_timeout_handle(void *context)
 {
-    USER_TIMER_COMMAND_t command = (USER_TIMER_COMMAND_t)context;
-    if (command == DO_BOND)
-    {
-        //   led_action_stop();
-        //        reset_short_press_action_SM(INPUT_ACCEPT_BOND);
-        //    bond_fail_event_dispatch();
-    }
-    else if (command == DO_WAIT_BOND_COMMAND)
-    { // wait bond time out
-        if (m_conn_handle != BLE_CONN_HANDLE_INVALID)
-        {                                                                                    // still connected
-            sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION); // disconnect to the peer
-        }
-    }
-    else
-    {
-    }
+//    USER_TIMER_COMMAND_t command = (USER_TIMER_COMMAND_t)context;
+//    if (command == DO_BOND)
+//    {
+//        //    led_action_stop();
+//        //    reset_short_press_action_SM(INPUT_ACCEPT_BOND);
+//        //    bond_fail_event_dispatch();
+//    }
+//    else if (command == DO_WAIT_BOND_COMMAND)
+//    { // wait bond time out
+//        if (m_conn_handle != BLE_CONN_HANDLE_INVALID)
+//        {                                                                                    // still connected
+//            sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION); // disconnect to the peer
+//        }
+//    }
+//    else
+//    {
+//    }
 }
 
 /**********************************************************************
@@ -296,7 +300,7 @@ static uint32_t L1_resend_package(L1_Send_Content *content)
     }
 
     /*fill header*/
-    global_L1_header_buffer[L1_HEADER_MAGIC_POS] = L1_HEADER_MAGIC;                           /* Magic */
+    global_L1_header_buffer[L1_HEADER_MAGIC_POS] = L1_SEND_HEADER_MAGIC;                           /* Magic */
     global_L1_header_buffer[L1_HEADER_PROTOCOL_VERSION_POS] = L1_HEADER_VERSION;              /* protocol version */
     global_L1_header_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] = (content->length >> 8 & 0xFF); /* length high byte */
     global_L1_header_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] = (content->length & 0xFF);       /* length low byte */
@@ -713,7 +717,7 @@ uint32_t L1_send(L2_Send_Content *content)
     }
 
     /*fill header*/
-    global_L1_header_buffer[L1_HEADER_MAGIC_POS] = L1_HEADER_MAGIC;                           /* Magic */
+    global_L1_header_buffer[L1_HEADER_MAGIC_POS] = L1_SEND_HEADER_MAGIC;                           /* Magic */
     global_L1_header_buffer[L1_HEADER_PROTOCOL_VERSION_POS] = L1_HEADER_VERSION;              /* protocol version */
     global_L1_header_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] = (content->length >> 8 & 0xFF); /* length high byte */
     global_L1_header_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] = (content->length & 0xFF);       /* length low byte */
@@ -1110,7 +1114,7 @@ void bond_success_event_observer(void)
 
 #endif
 
-#if 0
+#if 1
 /************************************************************************
 * resolve bond command
 * ���ְ󶨺͵�¼�����������Ҫ�ǵ�¼�����ǲ�Ӧ����ʾ�û��û��ֻ�
@@ -1119,66 +1123,47 @@ static uint32_t  resolve_private_bond_command(uint8_t key,const uint8_t * value 
 {
     uint32_t err_code = NRF_SUCCESS;
 
-    if( (key == 0x01) || (key == 0x03)) { //receive bond or login command
+    if( (key == 0x01) || (key == 0x02)) { //receive bond or login command
         app_timer_stop(user_action_delay_timer); //stop wait bond command timer
     }
-#ifdef DEBUG_LOG
-    {
-//        LOG(LEVEL_INFO,"resolve_private_bond_command:key[%d]\n",key);
-        //   char str[128];
-        //   sprintf(str,"resolve_private_bond_command:key[%d]\r\n",key);
-        // simple_uart_putstring((const uint8_t *)str);
-        //    sprintf(str,"value:[%s],length[%d]\r\n",value,length);
-        //    simple_uart_putstring((const uint8_t *)str);
-    }
-#endif
+		
     switch(key) {
         case 0x01: //bond request
             /* schdule proper task */
-            if((length == USER_ID_LENGTH) && value) {
-
-                uint8_t batt = get_battery_power_percentage();
-
-                if( batt < PRIVATE_BOND_POWER_LIMIT ){
-#ifdef DEBUG_LOG
-                    LOG(LEVEL_INFO,"Battery Level is too Low for BONDING(%d)\n",batt);
-#endif                
-                    bond_fail_event_dispatch();
-                    break;
-                }
+            if((length == USER_ID_LENGTH) && value) 
+						{
 
                 memcpy((uint8_t*)user_id,value,USER_ID_LENGTH);
-                //                                global_short_press_action = INPUT_ACCEPT_BOND; //wait knock event to accept bond
+                //global_short_press_action = INPUT_ACCEPT_BOND; //wait knock event to accept bond
                 app_timer_start(user_action_delay_timer,USER_ACTION_TIMEOUT,(void *)DO_BOND);
-                notification_start(NOTIFICATION_BONDING,0);
-                //        led_action_control(NOTIFICATION_BONDING,SERIAL_FLASH,1000); //set a big loop time as flash entil time out
-
-            } else {
-                bond_fail_event_dispatch();
-                //
+             
+            } 
+						else 
+						{
+             //   bond_fail_event_dispatch();
             }
             break;
-        case 0x03: //login request
+        case 0x02: //login request
             if((length == USER_ID_LENGTH) && value) {
 
-                err_code = check_user_id_bonded(value,USER_ID_LENGTH);
-                if(err_code == NRF_SUCCESS) {
-                    if(sleep_setting_count() == 0){// resend sleeping status if apk was reinstalled
-                        send_last_time_sleep_mode();
-                    }
+//                err_code = check_user_id_bonded(value,USER_ID_LENGTH);
+//                if(err_code == NRF_SUCCESS) {
+//                    if(sleep_setting_count() == 0){// resend sleeping status if apk was reinstalled
+//                        send_last_time_sleep_mode();
+//                    }
 
-                    login_success_event_dispatch();
-                    //change bond status machine
-                    private_bond_machine =PRIVATE_BOND_SUCCESS;
-                    break;
-                }
+//                    login_success_event_dispatch();
+//                    //change bond status machine
+//                    private_bond_machine =PRIVATE_BOND_SUCCESS;
+//                    break;
+//                }
 
             }
 
             //code comes here reflects login fail
-            login_fail_event_dispatch();
+           // login_fail_event_dispatch();
             //login fail so restart wait bond command
-            app_timer_start(user_action_delay_timer,WAIT_BOND_COMMAND_TIMEOUT,(void *)DO_WAIT_BOND_COMMAND);
+//            app_timer_start(user_action_delay_timer,WAIT_BOND_COMMAND_TIMEOUT,(void *)DO_WAIT_BOND_COMMAND);
             break;
 
     }
@@ -1301,6 +1286,7 @@ static uint32_t L2_frame_resolve(uint8_t *data, uint16_t length, RECEIVE_STATE *
     }
 
     BLUETOOTH_COMMUNICATE_COMMAND command_id;
+
     uint8_t version_num;         /* L2 version number */
     uint8_t first_key;           /* first key of L2 payload*/
     uint16_t first_value_length; /* length of first value */
@@ -1308,27 +1294,7 @@ static uint32_t L2_frame_resolve(uint8_t *data, uint16_t length, RECEIVE_STATE *
     command_id = (BLUETOOTH_COMMUNICATE_COMMAND)data[0];
     version_num = data[1];
     version_num = version_num; /*current not use it*/
-#ifdef DEBUG_LOG
 
-    {
-
-        //  char str[64];
-        if (private_bond_machine == PRIVATE_NOT_BOND)
-        {
-            LOG(LEVEL_INFO, "PRIVATE_NOT_BOND\n");
-            //    sprintf(str,"PRIVATE_NOT_BOND\r\n");
-        }
-        else if (private_bond_machine == PRIVATE_BOND_SUCCESS)
-        {
-            LOG(LEVEL_INFO, "PRIVATE_BOND_SUCCESS\n");
-            //    sprintf(str,"PRIVATE_BOND_SUCCESS\r\n");
-        }
-        // simple_uart_putstring((const uint8_t *)str);
-        //    sprintf(str,"command_id:%d\r\n",command_id);
-        //    simple_uart_putstring((const uint8_t *)str);
-        LOG(LEVEL_INFO, "command_id:%d\n", command_id);
-    }
-#endif
     switch (private_bond_machine)
     {
     case PRIVATE_NOT_BOND:
@@ -1336,9 +1302,11 @@ static uint32_t L2_frame_resolve(uint8_t *data, uint16_t length, RECEIVE_STATE *
         if (command_id == BOND_COMMAND_ID)
         {
             first_key = data[2];
-            first_value_length = (((data[3] << 8) | data[4]) & 0x1FF);
 
-            //   resolve_private_bond_command(first_key,data+ L2_FIRST_VALUE_POS,first_value_length);
+           first_value_length = (((data[3] << 8) | data[4]) & 0x1FF);
+
+           resolve_private_bond_command(first_key, data + L2_FIRST_VALUE_POS,first_value_length);
+
         }
         else if (FACTORY_TEST_COMMAND_ID == command_id)
         {
@@ -1416,15 +1384,6 @@ static uint32_t L2_frame_resolve(uint8_t *data, uint16_t length, RECEIVE_STATE *
 #endif
 
         case HEALTH_DATA_COMMAND_ID:
-#ifdef DEBUG_LOG
-
-        {
-            LOG(LEVEL_INFO, "len:%d - %d:%d:%d \n", length, data[4], data[5], data[6]);
-            //    char str[32];
-            //    sprintf(str,"len:%d - %d:%d:%d \t",length,data[4],data[5],data[6]);
-            //     simple_uart_putstring((const uint8_t *)str);
-        }
-#endif
             first_key = data[2];
             first_value_length = (((data[3] << 8) | data[4]) & 0x1FF);
             //                        resolve_HealthData_command(first_key,data+ L2_FIRST_VALUE_POS,first_value_length);
@@ -1490,7 +1449,7 @@ static L1Header_t *construct_response_package(uint16_t sequence_id, bool check_s
     static L1Header_t response_header;
     L1_version_value_t version_ack;
 
-    response_header.magic = L1_HEADER_MAGIC;
+    response_header.magic = L1_SEND_HEADER_MAGIC;
 
     version_ack.version_def.version = L2_HEADER_VERSION;
     version_ack.version_def.ack_flag = 1;

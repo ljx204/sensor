@@ -46,9 +46,9 @@ __initial_sp
                 IF :DEF: __STARTUP_CONFIG
 Heap_Size       EQU __STARTUP_CONFIG_HEAP_SIZE
                 ELIF :DEF: __HEAP_SIZE
-Heap_Size       EQU __HEAP_SIZE
+Heap_Size       EQU  24576
                 ELSE
-Heap_Size       EQU 4096
+Heap_Size       EQU  24576
                 ENDIF
 
                 AREA    HEAP, NOINIT, READWRITE, ALIGN=3

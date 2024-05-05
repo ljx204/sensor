@@ -50,6 +50,8 @@ static void gap_params_init(void)
 	memset(name, 0, sizeof(name));
 
 	strcpy(name, DEVICE_NAME);
+	
+#if 0	
 	strcat(name, "_");
 
 	tmp = (addr.addr[4] >> 4);
@@ -91,6 +93,7 @@ static void gap_params_init(void)
 	tmp = addr.addr[0] % 0x10;
 	tmp = tmp >= 10 ? (tmp + 0x37) : (tmp + 0x30);
 	strncat(name, (char *)&tmp, 1);
+#endif
 
 	BLE_GAP_CONN_SEC_MODE_SET_OPEN(&sec_mode);
 

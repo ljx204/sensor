@@ -148,7 +148,24 @@
           <Name>UL2CM3(-S0 -C0 -P0 -FD20000000 -FC4000 -FN2 -FF0nrf52xxx -FS00 -FL0200000 -FF1nrf52xxx_uicr -FS110001000 -FL11000 -FP0($$Device:nRF52832_xxAA$Flash\nrf52xxx.flm) -FP1($$Device:nRF52832_xxAA$Flash\nrf52xxx_uicr.flm))</Name>
         </SetRegEntry>
       </TargetDriverDllRegistry>
-      <Breakpoint/>
+      <Breakpoint>
+        <Bp>
+          <Number>0</Number>
+          <Type>0</Type>
+          <LineNumber>797</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>256662</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>..\src\pah8009\sensor\pah800x_main.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\app\../src/pah8009/sensor/pah800x_main.c\797</Expression>
+        </Bp>
+      </Breakpoint>
       <WatchWindow1>
         <Ww>
           <count>0</count>
@@ -159,6 +176,11 @@
           <count>1</count>
           <WinNumber>1</WinNumber>
           <ItemText>product_id</ItemText>
+        </Ww>
+        <Ww>
+          <count>2</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>spo2_array</ItemText>
         </Ww>
       </WatchWindow1>
       <Tracepoint>
@@ -1536,7 +1558,7 @@
 
   <Group>
     <GroupName>PHA8009</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -1788,7 +1810,7 @@
 
   <Group>
     <GroupName>pedometer</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -1816,7 +1838,7 @@
 
   <Group>
     <GroupName>::Device</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>1</RteFlg>

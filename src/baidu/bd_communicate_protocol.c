@@ -514,7 +514,7 @@ LABEL_SEND_ACK:
                 set_complete_callback(sendPara);
 
             } else {
-                //¶ªÆú
+                //ï¿½ï¿½ï¿½ï¿½
                 current_task_type = TASK_NONE;
                 next_task_type = TASK_NONE;
                 g_ack_package_buffer.isUsed= 0;
@@ -691,7 +691,7 @@ uint32_t L1_send(L2_Send_Content * content)
     }
 
     /*fill header*/
-    global_L1_header_buffer[L1_HEADER_MAGIC_POS] = L1_HEADER_MAGIC;           /* Magic */
+    global_L1_header_buffer[L1_HEADER_MAGIC_POS] = L1_SEND_HEADER_MAGIC;           /* Magic */
     global_L1_header_buffer[L1_HEADER_PROTOCOL_VERSION_POS] = L1_HEADER_VERSION;       /* protocol version */
     global_L1_header_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] = (content->length >> 8 & 0xFF);    /* length high byte */
     global_L1_header_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] = (content->length & 0xFF);      /* length low byte */
@@ -1083,7 +1083,7 @@ void bond_success_event_observer(void)
 
 /************************************************************************
 * resolve bond command
-* Çø·Ö°ó¶¨ºÍµÇÂ¼Á½¸öÃüÁî£¬×îÖ÷ÒªÊÇµÇÂ¼ÃüÁîÊÇ²»Ó¦¸ÃÌáÊ¾ÓÃ»§ÇÃ»÷ÊÖ»·
+* ï¿½ï¿½ï¿½Ö°ó¶¨ºÍµï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½î£¬ï¿½ï¿½ï¿½ï¿½Òªï¿½Çµï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½Ç²ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½Ã»ï¿½ï¿½Ã»ï¿½ï¿½Ö»ï¿½
 *************************************************************************/
 static uint32_t  resolve_private_bond_command(uint8_t key,const uint8_t * value ,uint16_t length)
 {

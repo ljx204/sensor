@@ -51,7 +51,7 @@ void pah_print(
     UNUSED_VAR(funcname);
     UNUSED_VAR(filename);
 
-    char dest[400];
+    char dest[500];
     va_list argptr;
     int char_num = 0;
 
