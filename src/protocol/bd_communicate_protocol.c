@@ -141,18 +141,18 @@ static void delay_send_func(void *context)
 
         // wait response package timeout
         // whole package resent
-        if (content->resendCount < 3)
-        {
-            content->resendCount++;
+//        if (content->resendCount < 3)
+//        {
+//            content->resendCount++;
 
-            NRF_LOG_INFO("time out resend \r\n");
+//            NRF_LOG_INFO("time out resend \r\n");
 
-            error_code = L1_resend_package(content);
-            if (error_code == NRF_SUCCESS)
-            {
-                return;
-            }
-        }
+//            error_code = L1_resend_package(content);
+//            if (error_code == NRF_SUCCESS)
+//            {
+//                return;
+//            }
+//        }
     }
 
     // comes here for some reason :(1) resend more than three times (2)data not send complete but content buffer is full last more than 8s
@@ -1271,6 +1271,43 @@ static uint32_t resolve_test_flash_command(uint8_t key, const uint8_t *value, ui
     return err_code;
 }
 #endif
+static void process_app_save_history(uint8_t key)
+{
+	              L2_Send_Content sendContent;
+	
+	              global_reponse_buffer[0] = 0x05;                              /*command id*/
+                global_reponse_buffer[1] = L2_HEADER_VERSION;                               /*L2 header version */
+                global_reponse_buffer[2] = key;                               /*first key, bond response*/
+                global_reponse_buffer[3] = 0;
+                global_reponse_buffer[4] = 12;                                   /* length  = 12 */
+						    
+	              
+						    global_reponse_buffer[5] = 11;       
+                
+               
+                sendContent.callback    = NULL;
+                sendContent.content     = global_reponse_buffer;
+                sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
+                L1_send(&sendContent);
+}
+
+p_callback motion_process_table[] = {
+	     process_app_save_history,
+	     NULL,
+	     NULL,
+	     NULL,
+	     NULL,
+	     NULL,
+	     NULL,
+	     NULL,
+	     NULL,
+	     NULL,
+	     NULL,
+	     NULL,
+	     NULL,
+	
+	
+};
 /***********************************************************************
  * para introduction
  * data                                   :      just the full of L2
@@ -1291,10 +1328,90 @@ static uint32_t L2_frame_resolve(uint8_t *data, uint16_t length, RECEIVE_STATE *
     uint8_t first_key;           /* first key of L2 payload*/
     uint16_t first_value_length; /* length of first value */
 
+		L2_Send_Content sendContent;
     command_id = (BLUETOOTH_COMMUNICATE_COMMAND)data[0];
     version_num = data[1];
     version_num = version_num; /*current not use it*/
-
+		
+		first_key = data[2];
+		
+		switch(command_id)
+		{
+			case 0x02:   //device information
+			{
+				    global_reponse_buffer[0] = command_id;                              /*command id*/
+            global_reponse_buffer[1] = L2_HEADER_VERSION;                               /*L2 header version */
+            global_reponse_buffer[2] = first_key;                               /*first key, bond response*/
+            global_reponse_buffer[3] = 0;
+            global_reponse_buffer[4] = 20;                                   /* length  = 20 */
+            //FIXME: need to def version information
+				    for(int i = 0; i < 20; i++)
+				    {
+							  global_reponse_buffer[5 + i] = 0x31 + i;  
+						}
+						
+            sendContent.callback    = NULL;
+            sendContent.content     = global_reponse_buffer;
+            sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
+            L1_send(&sendContent);
+				
+				    break;
+			}
+			case 0x04:
+			{
+				   if(first_key == 0x07)
+					 {
+						    global_reponse_buffer[0] = command_id;                              /*command id*/
+                global_reponse_buffer[1] = L2_HEADER_VERSION;                               /*L2 header version */
+                global_reponse_buffer[2] = first_key;                               /*first key, bond response*/
+                global_reponse_buffer[3] = 0;
+                global_reponse_buffer[4] = 1;                                   /* length  = 20 */
+						    
+						    global_reponse_buffer[5] = 50;     //battery volume    
+                
+               
+                sendContent.callback    = NULL;
+                sendContent.content     = global_reponse_buffer;
+                sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
+                L1_send(&sendContent);
+						 
+					 }
+					 else if(first_key == 0x06)
+					 {
+						    global_reponse_buffer[0] = command_id;                              /*command id*/
+                global_reponse_buffer[1] = L2_HEADER_VERSION;                               /*L2 header version */
+                global_reponse_buffer[2] = first_key;                               /*first key, bond response*/
+                global_reponse_buffer[3] = 0;
+                global_reponse_buffer[4] = 1;                                   /* length  = 20 */
+						    
+						    global_reponse_buffer[5] = 0x01;     //battery state    
+                
+               
+                sendContent.callback    = NULL;
+                sendContent.content     = global_reponse_buffer;
+                sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
+                L1_send(&sendContent);
+					 }
+				
+				break;
+			}
+			
+			case 0x05:
+			{
+				   p_callback p = motion_process_table[first_key - APP_SAVE_HISTORY];
+				
+				   if(p != NULL)
+					 {
+						   p(first_key);
+					 }
+				
+			}break;
+				
+			default:
+				break;
+		}
+		
+#if 0
     switch (private_bond_machine)
     {
     case PRIVATE_NOT_BOND:
@@ -1435,6 +1552,7 @@ static uint32_t L2_frame_resolve(uint8_t *data, uint16_t length, RECEIVE_STATE *
     }
     break;
     }
+#endif
 
     /*resolve complete and restart receive*/
     *resolve_state = WAIT_START;
@@ -1567,11 +1685,12 @@ void L1_receive_data(uint8_t *data, uint16_t length)
 
             uint16_t crc16_value = (received_buffer[L1_HEADER_CRC16_HIGH_BYTE_POS] << 8 | received_buffer[L1_HEADER_CRC16_LOW_BYTE_POS]);
 
-            if (L1_crc_check(crc16_value, received_buffer + L1_HEADER_SIZE, (received_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] | (received_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] << 8))) == NRF_SUCCESS)
+         //   if (L1_crc_check(crc16_value, received_buffer + L1_HEADER_SIZE, (received_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] | (received_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] << 8))) == NRF_SUCCESS)
+						if(1)
             { // check crc for received package
                 NRF_LOG_INFO("will send success response\n");
                 // send response
-                L1_receive_response((received_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] | (received_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)), true);
+             //   L1_receive_response((received_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] | (received_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)), true);
                 /*throw data to uppder layer*/
                 L2_frame_resolve(received_buffer + L1_HEADER_SIZE, (received_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] | (received_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] << 8)), &receive_state);
             }

@@ -39,7 +39,7 @@
 
 
 //#define PAH_800x_ENABLE_DEBUG_PRINT
-#define PAH_800x_ENABLE_LOG_PRINT
+//#define PAH_800x_ENABLE_LOG_PRINT
 
 #ifdef PAH_800x_ENABLE_LOG_PRINT
 #define LOG_PRINT(...) pah_print(__LINE__, __func__, __FILENAME__, __VA_ARGS__)

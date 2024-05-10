@@ -235,6 +235,27 @@ typedef enum
     TEST_COMMAND_ID = 0xFF
 } BLUETOOTH_COMMUNICATE_COMMAND;
 
+
+typedef enum
+{
+	  APP_SAVE_HISTORY = 0x01,
+	  STEP_NUMBER_HISTORY = 0x02,
+	  SLEEP_HISTORY   = 0x03,
+	  DATA_HISTORY_BEGIN = 0x04,
+	  DATA_HISTORY_END   = 0x05,
+	  CURRENT_DATA_NUMBER = 0x08,
+	  CURRENT_MOTION_STATE = 0x09,
+	  HEART_HISTORY_DATA          = 0x0C,
+	  HEART_HISTORY_ALL_DATA          = 0x0D,
+	  PRESS_HISTORY_DATA          = 0x0E,
+	  PRESS_HISTORY_ALL_DATA          = 0x0F,
+	  PPG_AAC_HISTORY_DATA          = 0x10,
+	  MORE_MOTION_HISTORY_DATA          = 0x12,
+	  CO2_HISTORY_DATA          = 0x14,
+}motion_index;
+
+typedef  void (*p_callback)(uint8_t key);
+
 typedef enum
 {
     SEND_SUCCESS = 1,

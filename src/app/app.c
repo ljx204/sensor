@@ -130,5 +130,5 @@ void app_init(void)
 
     app_saadc_init();
 
-    app_process_data_init();
+//    app_process_data_init();
 }

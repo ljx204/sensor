@@ -1164,13 +1164,6 @@ void app_pah8009_process(void)
 
     auto_mode_sensor_start();
 
-    // touch_only_sensor_start();
-
-    //	   err_code = app_timer_create(&ppg_process_timer, APP_TIMER_MODE_SINGLE_SHOT, ppg_algorithm_func);
-    //
-    //     APP_ERROR_CHECK(err_code);
-
-    //  err_code = app_timer_start(ppg_process_timer, APP_TIMER_TICKS(20), NULL);
 }
 
 void pah_write_data(unsigned char reg, const unsigned char data)

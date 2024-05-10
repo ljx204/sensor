@@ -11,6 +11,17 @@
 #include "nrf_log.h"
 #include "ble_srv_common.h"
 
+#define NUS_BASE_UUID                                                                                      \
+ {                                                                                                      \
+        {                                                                                                  \
+            0x00, 0x02, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x20, 0x00, 0x00, 0x01, 0x00, 0x03, 0x00 \
+        }                                                                                                  \
+ }
+
+#define BLE_UUID_NUS_SERVICE 0x0001 /**< The UUID of the Nordic UART Service. */
+#define BLE_UUID_NUS_TX_CHARACTERISTIC 0x0003 /**< The UUID of the TX Characteristic. */
+#define BLE_UUID_NUS_RX_CHARACTERISTIC 0x0002 /**< The UUID of the RX Characteristic. */
+		
 #define BLE_UART_MAX_RX_CHAR_LEN BLE_UART_MAX_DATA_LEN /**< Maximum length of the RX Characteristic (in bytes). */
 #define BLE_UART_MAX_TX_CHAR_LEN BLE_UART_MAX_DATA_LEN /**< Maximum length of the TX Characteristic (in bytes). */
 
@@ -18,6 +29,8 @@ uint32_t ble_uart_init(ble_uart_t *p_uart, const ble_uart_init_t *p_uart_init)
 {
     uint32_t err_code;
     ble_uuid_t ble_uuid;
+	  ble_uuid128_t nus_base_uuid = NUS_BASE_UUID;
+	
     ble_add_char_params_t add_char_params;
 
     // Initialize service structure.
@@ -26,15 +39,18 @@ uint32_t ble_uart_init(ble_uart_t *p_uart, const ble_uart_init_t *p_uart_init)
 
     // Add service.
 
+    err_code = sd_ble_uuid_vs_add(&nus_base_uuid, &p_uart->uuid_type);
+    VERIFY_SUCCESS(err_code);
+
     ble_uuid.type = p_uart->uuid_type;
-    ble_uuid.uuid = UART_UUID_SERVICE;
+    ble_uuid.uuid = BLE_UUID_NUS_SERVICE;
 
     err_code = sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY, &ble_uuid, &p_uart->service_handle);
     VERIFY_SUCCESS(err_code);
 
     // Add Write characteristic.  receive data from phone
     memset(&add_char_params, 0, sizeof(add_char_params));
-    add_char_params.uuid = UART_UUID_WRITE_CHAR;
+    add_char_params.uuid = BLE_UUID_NUS_RX_CHARACTERISTIC;
     add_char_params.uuid_type = p_uart->uuid_type;
 
     add_char_params.max_len = BLE_UART_MAX_RX_CHAR_LEN;
@@ -56,7 +72,7 @@ uint32_t ble_uart_init(ble_uart_t *p_uart, const ble_uart_init_t *p_uart_init)
 
     // Add READ characteristic.
     memset(&add_char_params, 0, sizeof(add_char_params));
-    add_char_params.uuid = UART_UUID_READ_CHAR;
+    add_char_params.uuid = BLE_UUID_NUS_TX_CHARACTERISTIC;
     add_char_params.uuid_type = p_uart->uuid_type;
     add_char_params.max_len = BLE_UART_MAX_TX_CHAR_LEN;
     add_char_params.init_len = sizeof(uint8_t);

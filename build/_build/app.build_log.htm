@@ -27,22 +27,26 @@ Project File Date:  05/05/2024
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 7 (build 960)', folder: 'C:\Keil_v5\ARM\armcompile5\Bin'
 Build target 'nrf52832_xxaa'
-compiling pah800x_main.c...
-..\src\pah8009\algorithm\pah_hr\V303009\pxialg.h(692): warning:  #1295-D: Deprecated declaration PxiAlg_Query_Mem_Size - give arg types
-  PXIALG_API uint32_t PxiAlg_Query_Mem_Size();
-..\src\pah8009\algorithm\pah_hr\V303009\pxialg.h(693): warning:  #1295-D: Deprecated declaration PxiAlg_GetHrUpdateFlag - give arg types
-  PXIALG_API uint8_t PxiAlg_GetHrUpdateFlag();
-..\src\pah8009\sensor\pah800x_main.c(1109): warning:  #177-D: variable "frame_count"  was declared but never referenced
-                  uint8_t frame_count = ppg_mems_data_alg.ppg_frame_count;
-..\src\pah8009\sensor\pah800x_main.c(1403): warning:  #177-D: function "report_hr_data"  was declared but never referenced
-  static void report_hr_data(const ppg_mems_data_t *ppg_mems_data_alg, int32_t ret, float hr, float hr_grader)
-..\src\pah8009\sensor\pah800x_main.c(1495): warning:  #177-D: function "error_handle"  was declared but never referenced
-  static void error_handle(void)
-..\src\pah8009\sensor\pah800x_main.c: 5 warnings, 0 errors
+compiling bd_communicate_protocol.c...
+..\src\protocol\bd_communicate_protocol.c(129): warning:  #177-D: variable "error_code"  was declared but never referenced
+      uint32_t error_code;
+..\src\protocol\bd_communicate_protocol.c(1329): warning:  #177-D: variable "first_value_length"  was declared but never referenced
+      uint16_t first_value_length; /* length of first value */
+..\src\protocol\bd_communicate_protocol.c(1686): warning:  #177-D: variable "crc16_value"  was declared but never referenced
+              uint16_t crc16_value = (received_buffer[L1_HEADER_CRC16_HIGH_BYTE_POS] << 8 | received_buffer[L1_HEADER_CRC16_LOW_BYTE_POS]);
+..\src\protocol\bd_communicate_protocol.c(89): warning:  #177-D: variable "ota_delay_timer"  was declared but never referenced
+  APP_TIMER_DEF(ota_delay_timer);
+..\src\protocol\bd_communicate_protocol.c(911): warning:  #177-D: function "resolve_notify_command"  was declared but never referenced
+  static uint32_t resolve_notify_command(uint8_t key, const uint8_t *value, uint16_t length)
+..\src\protocol\bd_communicate_protocol.c(1122): warning:  #177-D: function "resolve_private_bond_command"  was declared but never referenced
+  static uint32_t  resolve_private_bond_command(uint8_t key,const uint8_t * value ,uint16_t length)
+..\src\protocol\bd_communicate_protocol.c(1195): warning:  #177-D: function "resolve_firmware_update_command"  was declared but never referenced
+  static void resolve_firmware_update_command(FIRMWARE_UPDATE_KEY key)
+..\src\protocol\bd_communicate_protocol.c: 7 warnings, 0 errors
 linking...
-Program Size: Code=119516 RO-data=10464 RW-data=1368 ZI-data=43880  
+Program Size: Code=117200 RO-data=9848 RW-data=1376 ZI-data=43864  
 FromELF: creating hex file...
-".\_build\app.axf" - 0 Error(s), 5 Warning(s).
+".\_build\app.axf" - 0 Error(s), 7 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -68,10 +72,10 @@ Package Vendor: NordicSemiconductor
    * Component: ARM::CMSIS:CORE:5.3.0
 
    * Component: NordicSemiconductor::Device:Startup:8.40.3
+      Source file:   Device/Source/arm/arm_startup_nrf52.s
+      Include file:  Device/Include/system_nrf.h
       Source file:   Device/Source/system_nrf52.c
       Include file:  Device/Include/system_nrf52.h
-      Include file:  Device/Include/system_nrf.h
-      Source file:   Device/Source/arm/arm_startup_nrf52.s
 Build Time Elapsed:  00:00:02
 </pre>
 </body>

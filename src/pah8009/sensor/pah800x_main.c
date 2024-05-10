@@ -771,19 +771,19 @@ void spo2_alg_task(void)
                         spo2_array[count]=mySpO2;
                         count=count+1;
                         
-                        LOG_PRINT("Over_30_sec_Stop_measurement\n");
-                        LOG_PRINT("This_meausrement_suggest_spo2_value is");
+                        NRF_LOG_INFO("Over_30_sec_Stop_measurement\n");
+                        NRF_LOG_INFO("This_meausrement_suggest_spo2_value is");
                         
                         bubblesort(spo2_array,count);
                         
                         if(count % 2 == 0)
                         {
                               //log_printf(" "LOG_FLOAT_MARKER" \n", LOG_FLOAT(spo2_array[count/2]));
-                              LOG_PRINT(" "LOG_FLOAT_MARKER" \n",LOG_FLOAT((spo2_array[(int)(count/2)] + spo2_array[(int)(count/2) - 1]) / 2.0f)); 
+                              NRF_LOG_INFO(" "LOG_FLOAT_MARKER" \n",LOG_FLOAT((spo2_array[(int)(count/2)] + spo2_array[(int)(count/2) - 1]) / 2.0f)); 
                         }
                         else
                         {
-                              LOG_PRINT(" "LOG_FLOAT_MARKER" \n", LOG_FLOAT(spo2_array[(int)(count/2)]*1.0f));
+                              NRF_LOG_INFO(" "LOG_FLOAT_MARKER" \n", LOG_FLOAT(spo2_array[(int)(count/2)]*1.0f));
                         }
                         
                         //log_pah8series_no_touch();

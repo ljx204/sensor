@@ -58,9 +58,20 @@ static signed char sendEvent(STKMOTION_EVENT event, signed int data)
 
     if (event == STK_EVENT_STEP_NOTIFY)
     {
-      //  NRF_LOG_INFO("step = %d \n", data);
+        NRF_LOG_INFO("step = %d \n", data);
         global_step = data;
     }
+		else if (event == STK_EVENT_FLIP_NOTIFY)
+		{
+			  NRF_LOG_INFO("FLIP");
+		}
+		else if (event == STK_EVENT_FALL_NOTIFY)
+		{
+			  NRF_LOG_INFO("FALL");
+		}
+		
+	//	stkMotion_Set_Raise_Parma
+		
     // SEGGER_RTT_printf(0,"stkmotion>> event: %d, data: %d", event, data);
     return 0;
 }
@@ -92,23 +103,23 @@ void STK832x_stkMotion_init(void)
     {
         stkMotion_Control(STK_PEDOMETER_X, STK_ENABLE_X);
 
-        stkMotion_Control(STK_RAISE_X, STK_DISABLE_X);
+        stkMotion_Control(STK_RAISE_X, STK_ENABLE_X);
 
-        stkMotion_Control(STK_FALL_X, STK_DISABLE_X);
+        stkMotion_Control(STK_FALL_X, STK_ENABLE_X);
 
-        stkMotion_Control(STK_SLEEP_X, STK_DISABLE_X);
+        stkMotion_Control(STK_SLEEP_X, STK_ENABLE_X);
 
-        stkMotion_Control(STK_ACTION_X, STK_DISABLE_X);
+        stkMotion_Control(STK_ACTION_X, STK_ENABLE_X);
 
-        stkMotion_Control(STK_SEDENTARY_X, STK_DISABLE_X);
+        stkMotion_Control(STK_SEDENTARY_X, STK_ENABLE_X);
 
-        stkMotion_Control(STK_CALORIE_X, STK_DISABLE_X);
+        stkMotion_Control(STK_CALORIE_X, STK_ENABLE_X);
 
-        stkMotion_Control(STK_DISTANCE_X, STK_DISABLE_X);
+        stkMotion_Control(STK_DISTANCE_X, STK_ENABLE_X);
 
-        stkMotion_Control(STK_FLIP_X, STK_DISABLE_X);
+        stkMotion_Control(STK_FLIP_X, STK_ENABLE_X);
 
-        stkMotion_Control(STK_SHAKE_X, STK_DISABLE_X);
+        stkMotion_Control(STK_SHAKE_X, STK_ENABLE_X);
     }
 
     // reset and enable pedometer ���ò����üƲ���
@@ -131,7 +142,7 @@ void STK832x_stkMotion_init(void)
     stkMotion_Set_Raise_Parma(6, 5);
 
     // sensitivity is 5 (1~10), level 1 is most sensitive ������Ϊ5(1~10)������1������
-    stkMotion_Set_Fall_Parma(3);
+    stkMotion_Set_Fall_Parma(1);
 
 #ifdef stkMotion_TIMER_MODE
     stkMotion_Set_Sleep_Parma(STK832x_RTC, 5); // the sensitive setting of sleep, range 1~10, level 1 is most sensitive
@@ -359,7 +370,7 @@ void stk832_sensor_interrupt_process(void *p_event_data, uint16_t event_size)
 static void STK832x_IRQ_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
 
-  //  NRF_LOG_INFO("stk");
+    NRF_LOG_INFO("stk");
     app_sched_event_put(NULL, 0, stk832_sensor_interrupt_process);
 
     // stk832x_registers_get(STK832x_FIFODATA, array_buf, 16*ACCD_TOTAL_DATA_LENGTH);

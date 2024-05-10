@@ -293,7 +293,7 @@ void app_ble_init(void)
 
     qwr_services_init();
 
-    app_info_service_init(); // info profile
+  //  app_info_service_init(); // info profile
 
     app_uart_service_init();
 

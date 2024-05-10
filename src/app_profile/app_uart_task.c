@@ -43,7 +43,11 @@ static void app_uart_rx_data_handler(ble_uart_evt_t *p_evt)
     if (p_evt->evt_type == BLE_UART_EVT_RX_DATA)
     {
 
-        NRF_LOG_INFO("Received %d", p_evt->params.rx_data.length);
+       // NRF_LOG_INFO("Received %d", p_evt->params.rx_data.length);
+			 for(int i = 0; i < p_evt->params.rx_data.length; i++)
+			 {
+				   NRF_LOG_INFO("0x%02x ", p_evt->params.rx_data.p_data[i]);
+			 }
 
         L1_receive_data((uint8_t *)p_evt->params.rx_data.p_data, p_evt->params.rx_data.length);
     }
@@ -185,7 +189,7 @@ void app_change_ble_addr(void)
     APP_ERROR_CHECK(err_code);
 
     // Increase the BLE address by one when advertising openly.
-    addr.addr[0] += 16;
+    addr.addr[0] += 17;
 
     err_code = sd_ble_gap_addr_set(&addr);
     APP_ERROR_CHECK(err_code);
