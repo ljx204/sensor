@@ -114,7 +114,7 @@ void simple_uart_putstring(const uint8_t *str);
 /* static & global varable */
 void schedule_async_send(void * contenxt,SEND_TASK_TYPE_T task);
 extern ble_nus_t                        m_nus;
-static L1_Send_Content sendContent[MAX_SEND_TASK];
+L1_Send_Content sendContent[MAX_SEND_TASK];
 static app_timer_id_t delay_send_wait_timer;   /* This timer is used to */
 static app_timer_id_t receive_time_out_timer;   /* receive time out timer */
 app_timer_id_t user_action_delay_timer;    /* wait for user action timeout timer */

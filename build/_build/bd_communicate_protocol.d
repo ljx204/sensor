@@ -48,6 +48,7 @@
 .\_build\bd_communicate_protocol.o: ..\components\libraries\experimental_section_vars\nrf_section_iter.h
 .\_build\bd_communicate_protocol.o: ..\components\libraries\util\nrf_assert.h
 .\_build\bd_communicate_protocol.o: ..\src\protocol\bd_communicate_protocol.h
+.\_build\bd_communicate_protocol.o: ..\src\app\app_process_data.h
 .\_build\bd_communicate_protocol.o: ..\components\libraries\log\nrf_log.h
 .\_build\bd_communicate_protocol.o: ..\components\libraries\util\sdk_common.h
 .\_build\bd_communicate_protocol.o: ..\components\libraries\util\sdk_os.h

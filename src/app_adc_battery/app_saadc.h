@@ -22,6 +22,8 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
+extern uint8_t BatteryVoltage;
+
 void app_saadc_init(void);
 
 #endif

@@ -91,3 +91,4 @@
 .\_build\pah800x_main.o: ..\src\pah8009\algorithm\pah_stress\V6033\pxialg_hrv.h
 .\_build\pah800x_main.o: ..\src\pah8009\sensor\pah_8009_reg_arr_default_20220623.h
 .\_build\pah800x_main.o: ..\components\libraries\scheduler\app_scheduler.h
+.\_build\pah800x_main.o: ..\src\app_pedometer\stkMotion.h

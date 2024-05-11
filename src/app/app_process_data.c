@@ -20,9 +20,15 @@
 #include "app_motion.h"
 #include "app_uart_task.h"
 
+#include "app_saadc.h"
+
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
+
+#define  DEVICE_INFORMATION "RING_SENSOR_20240510"
+ 
+extern  uint8_t global_reponse_buffer[];
 
 APP_TIMER_DEF(m_data_report_timer_id);
 
@@ -30,9 +36,8 @@ static void data_report_timer_handle(void *val);
 
 void app_process_data_init(void)
 {
-    uint32_t err_code;
 
-    err_code = app_timer_create(&m_data_report_timer_id,
+    app_timer_create(&m_data_report_timer_id,
                                 APP_TIMER_MODE_REPEATED,
                                 data_report_timer_handle);
 
@@ -101,3 +106,67 @@ static void data_report_timer_handle(void *val)
 {
     app_sched_event_put(NULL, 0, data_report_process);
 }
+
+
+void device_information_report(uint8_t key)
+{
+    L2_Send_Content sendContent;
+
+    global_reponse_buffer[0] = 0x02;                              /*command id*/
+    global_reponse_buffer[1] = L2_HEADER_VERSION;                               /*L2 header version */
+    global_reponse_buffer[2] = key;                               /*first key, bond response*/
+    global_reponse_buffer[3] = 0;
+    global_reponse_buffer[4] = 20;                                   /* length  = 20 */
+    //FIXME: need to def version information
+    
+    strcpy((char *)&global_reponse_buffer[5], (char *)DEVICE_INFORMATION);
+   		
+    sendContent.callback    = NULL;
+    sendContent.content     = global_reponse_buffer;
+    sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
+    
+    L1_send(&sendContent);
+
+}
+
+
+void battery_capacity_report(uint8_t key)
+{
+    L2_Send_Content sendContent;
+
+    global_reponse_buffer[0] = 0x04;                              /*command id*/
+    global_reponse_buffer[1] = L2_HEADER_VERSION;                 /*L2 header version */
+    global_reponse_buffer[2] = key;                               /*first key, bond response*/
+    global_reponse_buffer[3] = 0;
+    global_reponse_buffer[4] = 1;                                 /* length  = 1 */
+						    
+	global_reponse_buffer[5] = BatteryVoltage;     //battery volume    
+                
+               
+    sendContent.callback    = NULL;
+    sendContent.content     = global_reponse_buffer;
+    sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
+    L1_send(&sendContent);
+
+}
+
+void battery_charge_state_report(uint8_t key)
+{
+    L2_Send_Content sendContent;
+
+    global_reponse_buffer[0] = 0x04;                              /*command id*/
+    global_reponse_buffer[1] = L2_HEADER_VERSION;                 /*L2 header version */
+    global_reponse_buffer[2] = key;                               /*first key, bond response*/
+    global_reponse_buffer[3] = 0;
+    global_reponse_buffer[4] = 1;                                 /* length  = 1 */
+						    
+	global_reponse_buffer[5] = BatteryVoltage;                    //battery charge state    
+                
+               
+    sendContent.callback    = NULL;
+    sendContent.content     = global_reponse_buffer;
+    sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
+    L1_send(&sendContent);
+    
+}
+

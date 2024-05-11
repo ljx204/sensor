@@ -109,3 +109,5 @@
 .\_build\app.o: ..\src\app_pedometer\app_motion.h
 .\_build\app.o: ..\src\app_pedometer\stkMotion.h
 .\_build\app.o: ..\src\app\app_process_data.h
+.\_build\app.o: ..\components\libraries\uart\app_uart.h
+.\_build\app.o: ..\modules\nrfx\hal\nrf_uart.h

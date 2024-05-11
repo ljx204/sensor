@@ -58,7 +58,7 @@ static signed char sendEvent(STKMOTION_EVENT event, signed int data)
 
     if (event == STK_EVENT_STEP_NOTIFY)
     {
-        NRF_LOG_INFO("step = %d \n", data);
+       // NRF_LOG_INFO("step = %d \n", data);
         global_step = data;
     }
 		else if (event == STK_EVENT_FLIP_NOTIFY)
@@ -370,7 +370,7 @@ void stk832_sensor_interrupt_process(void *p_event_data, uint16_t event_size)
 static void STK832x_IRQ_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
 
-    NRF_LOG_INFO("stk");
+   // NRF_LOG_INFO("stk");
     app_sched_event_put(NULL, 0, stk832_sensor_interrupt_process);
 
     // stk832x_registers_get(STK832x_FIFODATA, array_buf, 16*ACCD_TOTAL_DATA_LENGTH);

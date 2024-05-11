@@ -663,6 +663,22 @@ void nrf_log_frontend_std_6(uint32_t           severity_mid,
     std_n(severity_mid, p_str, args,  ARRAY_SIZE(args));
 }
 
+void nrf_log_frontend_std_9(uint32_t           severity_mid,
+                            char const * const p_str,
+                            uint32_t           val0,
+                            uint32_t           val1,
+                            uint32_t           val2,
+                            uint32_t           val3,
+                            uint32_t           val4,
+                            uint32_t           val5,
+														uint32_t           val6,
+                            uint32_t           val7,
+                            uint32_t           val8)
+{
+    uint32_t args[] = {val0, val1, val2, val3, val4, val5, val6, val7, val8};
+    std_n(severity_mid, p_str, args,  ARRAY_SIZE(args));
+}
+
 
 void nrf_log_frontend_hexdump(uint32_t           severity_mid,
                               const void * const p_data,

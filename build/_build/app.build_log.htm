@@ -27,26 +27,15 @@ Project File Date:  05/05/2024
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 7 (build 960)', folder: 'C:\Keil_v5\ARM\armcompile5\Bin'
 Build target 'nrf52832_xxaa'
-compiling bd_communicate_protocol.c...
-..\src\protocol\bd_communicate_protocol.c(129): warning:  #177-D: variable "error_code"  was declared but never referenced
-      uint32_t error_code;
-..\src\protocol\bd_communicate_protocol.c(1329): warning:  #177-D: variable "first_value_length"  was declared but never referenced
-      uint16_t first_value_length; /* length of first value */
-..\src\protocol\bd_communicate_protocol.c(1686): warning:  #177-D: variable "crc16_value"  was declared but never referenced
-              uint16_t crc16_value = (received_buffer[L1_HEADER_CRC16_HIGH_BYTE_POS] << 8 | received_buffer[L1_HEADER_CRC16_LOW_BYTE_POS]);
-..\src\protocol\bd_communicate_protocol.c(89): warning:  #177-D: variable "ota_delay_timer"  was declared but never referenced
-  APP_TIMER_DEF(ota_delay_timer);
-..\src\protocol\bd_communicate_protocol.c(911): warning:  #177-D: function "resolve_notify_command"  was declared but never referenced
-  static uint32_t resolve_notify_command(uint8_t key, const uint8_t *value, uint16_t length)
-..\src\protocol\bd_communicate_protocol.c(1122): warning:  #177-D: function "resolve_private_bond_command"  was declared but never referenced
-  static uint32_t  resolve_private_bond_command(uint8_t key,const uint8_t * value ,uint16_t length)
-..\src\protocol\bd_communicate_protocol.c(1195): warning:  #177-D: function "resolve_firmware_update_command"  was declared but never referenced
-  static void resolve_firmware_update_command(FIRMWARE_UPDATE_KEY key)
-..\src\protocol\bd_communicate_protocol.c: 7 warnings, 0 errors
-linking...
-Program Size: Code=117200 RO-data=9848 RW-data=1376 ZI-data=43864  
-FromELF: creating hex file...
-".\_build\app.axf" - 0 Error(s), 7 Warning(s).
+compiling app.c...
+..\src\app\app.c(117): error:  #20: identifier "uart_event_handle" is undefined
+      APP_UART_FIFO_INIT(&comm_params,
+..\src\app\app.c(130): warning:  #177-D: variable "err_code"  was declared but never referenced
+      ret_code_t err_code;
+..\src\app\app.c(99): warning:  #177-D: function "uart_init"  was declared but never referenced
+  static void uart_init(void)
+..\src\app\app.c: 2 warnings, 1 error
+".\_build\app.axf" - 1 Error(s), 2 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -73,10 +62,11 @@ Package Vendor: NordicSemiconductor
 
    * Component: NordicSemiconductor::Device:Startup:8.40.3
       Source file:   Device/Source/arm/arm_startup_nrf52.s
-      Include file:  Device/Include/system_nrf.h
-      Source file:   Device/Source/system_nrf52.c
       Include file:  Device/Include/system_nrf52.h
-Build Time Elapsed:  00:00:02
+      Source file:   Device/Source/system_nrf52.c
+      Include file:  Device/Include/system_nrf.h
+Target not created.
+Build Time Elapsed:  00:00:01
 </pre>
 </body>
 </html>

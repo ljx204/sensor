@@ -13,7 +13,7 @@
 #include "bd_crc16.h"
 #include "app_uart_task.h"
 #include "bd_communicate_protocol.h"
-
+#include "app_process_data.h"
 #include "nrf_assert.h"
 
 #include "nrf_log.h"
@@ -87,14 +87,6 @@ APP_TIMER_DEF(delay_send_wait_timer);
 APP_TIMER_DEF(receive_time_out_timer);
 APP_TIMER_DEF(user_action_delay_timer);
 APP_TIMER_DEF(ota_delay_timer);
-
-////static app_timer_id_t delay_send_wait_timer;   /* This timer is used to */
-
-// static app_timer_id_t receive_time_out_timer;   /* receive time out timer */
-
-// app_timer_id_t user_action_delay_timer;    /* wait for user action timeout timer */
-
-// extern app_timer_id_t  ota_delay_timer;     /* ota delay timer*/
 
 void stop_health_algorithm(void);
 
@@ -226,10 +218,10 @@ void trigger_ota_mode(void)
      ***********************************************************/
 
     // store time into flash
-    //   ota_pre_restart_info_store();
+    // ota_pre_restart_info_store();
 
     // alreay disabled softdevice
-    //   sd_power_gpregret_set(0x01);
+    // sd_power_gpregret_set(0x01);
     // reset the system and start OTA
     NVIC_SystemReset();
 }
@@ -300,7 +292,7 @@ static uint32_t L1_resend_package(L1_Send_Content *content)
     }
 
     /*fill header*/
-    global_L1_header_buffer[L1_HEADER_MAGIC_POS] = L1_SEND_HEADER_MAGIC;                           /* Magic */
+    global_L1_header_buffer[L1_HEADER_MAGIC_POS] = L1_SEND_HEADER_MAGIC;                      /* Magic */
     global_L1_header_buffer[L1_HEADER_PROTOCOL_VERSION_POS] = L1_HEADER_VERSION;              /* protocol version */
     global_L1_header_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] = (content->length >> 8 & 0xFF); /* length high byte */
     global_L1_header_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] = (content->length & 0xFF);       /* length low byte */
@@ -518,7 +510,7 @@ LABEL_SEND_ACK:
             }
             else
             {
-                // ����
+                // 
                 current_task_type = TASK_NONE;
                 next_task_type = TASK_NONE;
                 g_ack_package_buffer.isUsed = 0;
@@ -717,7 +709,7 @@ uint32_t L1_send(L2_Send_Content *content)
     }
 
     /*fill header*/
-    global_L1_header_buffer[L1_HEADER_MAGIC_POS] = L1_SEND_HEADER_MAGIC;                           /* Magic */
+    global_L1_header_buffer[L1_HEADER_MAGIC_POS] = L1_SEND_HEADER_MAGIC;                      /* Magic */
     global_L1_header_buffer[L1_HEADER_PROTOCOL_VERSION_POS] = L1_HEADER_VERSION;              /* protocol version */
     global_L1_header_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] = (content->length >> 8 & 0xFF); /* length high byte */
     global_L1_header_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] = (content->length & 0xFF);       /* length low byte */
@@ -1273,20 +1265,20 @@ static uint32_t resolve_test_flash_command(uint8_t key, const uint8_t *value, ui
 #endif
 static void process_app_save_history(uint8_t key)
 {
-	              L2_Send_Content sendContent;
+	    L2_Send_Content sendContent;
 	
-	              global_reponse_buffer[0] = 0x05;                              /*command id*/
-                global_reponse_buffer[1] = L2_HEADER_VERSION;                               /*L2 header version */
-                global_reponse_buffer[2] = key;                               /*first key, bond response*/
-                global_reponse_buffer[3] = 0;
-                global_reponse_buffer[4] = 12;                                   /* length  = 12 */
+	    global_reponse_buffer[0] = 0x05;                              /*command id*/
+       global_reponse_buffer[1] = L2_HEADER_VERSION;                               /*L2 header version */
+        global_reponse_buffer[2] = key;                               /*first key, bond response*/
+        global_reponse_buffer[3] = 0;
+        global_reponse_buffer[4] = 12;                                   /* length  = 12 */
 						    
 	              
-						    global_reponse_buffer[5] = 11;       
+		global_reponse_buffer[5] = 11;       
                 
                
-                sendContent.callback    = NULL;
-                sendContent.content     = global_reponse_buffer;
+        sendContent.callback    = NULL;
+        sendContent.content     = global_reponse_buffer;
                 sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
                 L1_send(&sendContent);
 }
@@ -1305,9 +1297,9 @@ p_callback motion_process_table[] = {
 	     NULL,
 	     NULL,
 	     NULL,
-	
-	
 };
+
+
 /***********************************************************************
  * para introduction
  * data                                   :      just the full of L2
@@ -1338,59 +1330,20 @@ static uint32_t L2_frame_resolve(uint8_t *data, uint16_t length, RECEIVE_STATE *
 		switch(command_id)
 		{
 			case 0x02:   //device information
-			{
-				    global_reponse_buffer[0] = command_id;                              /*command id*/
-            global_reponse_buffer[1] = L2_HEADER_VERSION;                               /*L2 header version */
-            global_reponse_buffer[2] = first_key;                               /*first key, bond response*/
-            global_reponse_buffer[3] = 0;
-            global_reponse_buffer[4] = 20;                                   /* length  = 20 */
-            //FIXME: need to def version information
-				    for(int i = 0; i < 20; i++)
-				    {
-							  global_reponse_buffer[5 + i] = 0x31 + i;  
-						}
-						
-            sendContent.callback    = NULL;
-            sendContent.content     = global_reponse_buffer;
-            sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
-            L1_send(&sendContent);
-				
+			{	
+						device_information_report(first_key);
 				    break;
 			}
+			
 			case 0x04:
 			{
 				   if(first_key == 0x07)
 					 {
-						    global_reponse_buffer[0] = command_id;                              /*command id*/
-                global_reponse_buffer[1] = L2_HEADER_VERSION;                               /*L2 header version */
-                global_reponse_buffer[2] = first_key;                               /*first key, bond response*/
-                global_reponse_buffer[3] = 0;
-                global_reponse_buffer[4] = 1;                                   /* length  = 20 */
-						    
-						    global_reponse_buffer[5] = 50;     //battery volume    
-                
-               
-                sendContent.callback    = NULL;
-                sendContent.content     = global_reponse_buffer;
-                sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
-                L1_send(&sendContent);
-						 
+						    battery_capacity_report(first_key);
 					 }
 					 else if(first_key == 0x06)
 					 {
-						    global_reponse_buffer[0] = command_id;                              /*command id*/
-                global_reponse_buffer[1] = L2_HEADER_VERSION;                               /*L2 header version */
-                global_reponse_buffer[2] = first_key;                               /*first key, bond response*/
-                global_reponse_buffer[3] = 0;
-                global_reponse_buffer[4] = 1;                                   /* length  = 20 */
-						    
-						    global_reponse_buffer[5] = 0x01;     //battery state    
-                
-               
-                sendContent.callback    = NULL;
-                sendContent.content     = global_reponse_buffer;
-                sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
-                L1_send(&sendContent);
+						   battery_charge_state_report(first_key);
 					 }
 				
 				break;
@@ -1686,7 +1639,7 @@ void L1_receive_data(uint8_t *data, uint16_t length)
             uint16_t crc16_value = (received_buffer[L1_HEADER_CRC16_HIGH_BYTE_POS] << 8 | received_buffer[L1_HEADER_CRC16_LOW_BYTE_POS]);
 
          //   if (L1_crc_check(crc16_value, received_buffer + L1_HEADER_SIZE, (received_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] | (received_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] << 8))) == NRF_SUCCESS)
-						if(1)
+		    if(1)
             { // check crc for received package
                 NRF_LOG_INFO("will send success response\n");
                 // send response

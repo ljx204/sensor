@@ -1153,9 +1153,9 @@ void app_pah8009_process(void)
     pxi_nrf_gpio_in_pull(PXI_NRF_GPIO_IN_6, PXI_NRF_GPIO_PULL_TYPE_PULLUP);
 
 	
-	//  ret = pah_sensor_init(diw_4mm_g_ir_hrd);   //heartbeat
+	  ret = pah_sensor_init(diw_4mm_g_ir_hrd);   //heartbeat
 	
-    ret = pah_sensor_init(diw_4mm_ir_r_ir_spo2);  //spo2
+ //   ret = pah_sensor_init(diw_4mm_ir_r_ir_spo2);  //spo2
 
     if (!ret)
     {

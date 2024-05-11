@@ -6,6 +6,11 @@
 
 #include "app_scheduler.h"
 
+#include "stkMotion.h"
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+
 
 //============================================================================
 // Static Global Variable
@@ -435,7 +440,7 @@ void hr_alg_task(void)
                     hr_grader = 0;
                 }
            
-             //   report_hr_data(&ppg_mems_data_alg, ret, hr, hr_grader);
+                report_hr_data(&ppg_mems_data_alg, ret, hr, hr_grader);
     
             }
             else
@@ -1268,10 +1273,12 @@ static void process(uint64_t timestamp)
             //MEMS_SensorX() absolute data must be largest when let hand down at static state.
             //MEMS_SensorZ() absolute data must be largest when let hand horizontal on the table at static state.
             /***********************G sensor explanation end***********************************/
-                
-            ppg_mems_data.MEMS_Data[0] = mems_data[0];//ReadGSensorX();
-            ppg_mems_data.MEMS_Data[1] = mems_data[1];//ReadGSensorY();
-            ppg_mems_data.MEMS_Data[2] = mems_data[2];//ReadGSensorZ();
+						int16_t acc_x, acc_y, acc_z;
+						
+            stkMotion_chip_read_xyz(&acc_x, &acc_y, &acc_z);    
+            ppg_mems_data.MEMS_Data[0] = acc_x;  //ReadGSensorX();
+            ppg_mems_data.MEMS_Data[1] = acc_y;  //ReadGSensorY();
+            ppg_mems_data.MEMS_Data[2] = acc_z;  //ReadGSensorZ();
             ppg_mems_data.duration = duration;
             
             ppg_mems_data.ppg_data = ppg_data ;
@@ -1404,17 +1411,37 @@ static void report_hr_data(const ppg_mems_data_t *ppg_mems_data_alg, int32_t ret
 {
     if (_main.debug_print_header == true)
     {
-        LOG_PRINT("Frame, Time, Touch_Flag, Data_Ready, Overflow_Flag, Overflow_Num, PPG0, PPG1, PPG2, Expo_A, Expo_B, Expo_C, MEMS_X, MEMS_Y, MEMS_Z, ret, hr, hr_grade\n");
+        NRF_LOG_INFO("Frame, Time, Touch_Flag, Data_Ready, Overflow_Flag, Overflow_Num, PPG0, PPG1, PPG2, Expo_A, Expo_B, Expo_C, MEMS_X, MEMS_Y, MEMS_Z, ret, hr, hr_grade\n");
 
         _main.debug_print_header = false;
     }
+		
+		NRF_LOG_INFO("A: %d,  %d,  %d,  %d,  %d ",
+                ppg_mems_data_alg->ppg_frame_count,  ppg_mems_data_alg->touch_flag,
+                  
+                ppg_mems_data_alg->ppg_data.data[0], ppg_mems_data_alg->ppg_data.data[1], ppg_mems_data_alg->ppg_data.data[2]
+		           );
+		
+		NRF_LOG_INFO("B: %d,  %d,  %d,  %d", (int)(ppg_mems_data_alg->MEMS_Data[0]), (int)(ppg_mems_data_alg->MEMS_Data[1]), (int)(ppg_mems_data_alg->MEMS_Data[2]), hr);
+
+		
+
+//				 NRF_LOG_INFO("%d, %d, %d, %d, %d, %d, %d, %d, %f\n",
+//                ppg_mems_data_alg->ppg_frame_count,  ppg_mems_data_alg->touch_flag,
+//                  
+//                ppg_mems_data_alg->ppg_data.data[0], ppg_mems_data_alg->ppg_data.data[1], ppg_mems_data_alg->ppg_data.data[2], \
+//                
+//                (ppg_mems_data_alg->MEMS_Data[0]), (ppg_mems_data_alg->MEMS_Data[1]), (ppg_mems_data_alg->MEMS_Data[2]), hr);
+
+		
+		
   
-    LOG_PRINT("%03d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %f, %f\n",
-                ppg_mems_data_alg->ppg_frame_count, ppg_mems_data_alg->duration, ppg_mems_data_alg->touch_flag,
-                ppg_mems_data_alg->ppg_data.has_data, ppg_mems_data_alg->ppg_data.has_overflow, ppg_mems_data_alg->ppg_data.overflow_num,
-                ppg_mems_data_alg->ppg_data.data[0], ppg_mems_data_alg->ppg_data.data[1], ppg_mems_data_alg->ppg_data.data[2],
-                ppg_mems_data_alg->ppg_data.exposure_time[0], ppg_mems_data_alg->ppg_data.exposure_time[1], ppg_mems_data_alg->ppg_data.exposure_time[2],
-                (int)(ppg_mems_data_alg->MEMS_Data[0]), (int)(ppg_mems_data_alg->MEMS_Data[1]), (int)(ppg_mems_data_alg->MEMS_Data[2]), ret, hr,  hr_grader);
+//    NRF_LOG_INFO("%03d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %f, %f\n",
+//                ppg_mems_data_alg->ppg_frame_count, ppg_mems_data_alg->duration, ppg_mems_data_alg->touch_flag,
+//                ppg_mems_data_alg->ppg_data.has_data, ppg_mems_data_alg->ppg_data.has_overflow, ppg_mems_data_alg->ppg_data.overflow_num,
+//                ppg_mems_data_alg->ppg_data.data[0], ppg_mems_data_alg->ppg_data.data[1], ppg_mems_data_alg->ppg_data.data[2],
+//                ppg_mems_data_alg->ppg_data.exposure_time[0], ppg_mems_data_alg->ppg_data.exposure_time[1], ppg_mems_data_alg->ppg_data.exposure_time[2],
+//                (int)(ppg_mems_data_alg->MEMS_Data[0]), (int)(ppg_mems_data_alg->MEMS_Data[1]), (int)(ppg_mems_data_alg->MEMS_Data[2]), ret, hr,  hr_grader);
 
 }
 
@@ -1504,7 +1531,7 @@ void ppg_sensor_interrupt_process(void *p_event_data, uint16_t event_size)
 {
 	       _main.interrupt_timestamp = pah_get_tick_count();
          process(_main.interrupt_timestamp);
-	   //    hr_alg_task();
-	      spo2_alg_task();
+	       hr_alg_task();
+	   //   spo2_alg_task();
 }
 
