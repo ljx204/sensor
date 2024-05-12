@@ -21,9 +21,9 @@
 #include "nrf_log_default_backends.h"
 
 #define GLOBAL_RECEIVE_BUFFER_SIZE 100
-#define GLOBAL_RESPONSE_BUFFER_SIZE 200
+#define GLOBAL_RESPONSE_BUFFER_SIZE 512
 
-#define USER_ID_LENGTH     10
+#define USER_ID_LENGTH 10
 
 uint32_t user_id[(USER_ID_LENGTH - 1) / (4) + 1];
 
@@ -133,18 +133,18 @@ static void delay_send_func(void *context)
 
         // wait response package timeout
         // whole package resent
-//        if (content->resendCount < 3)
-//        {
-//            content->resendCount++;
+        //        if (content->resendCount < 3)
+        //        {
+        //            content->resendCount++;
 
-//            NRF_LOG_INFO("time out resend \r\n");
+        //            NRF_LOG_INFO("time out resend \r\n");
 
-//            error_code = L1_resend_package(content);
-//            if (error_code == NRF_SUCCESS)
-//            {
-//                return;
-//            }
-//        }
+        //            error_code = L1_resend_package(content);
+        //            if (error_code == NRF_SUCCESS)
+        //            {
+        //                return;
+        //            }
+        //        }
     }
 
     // comes here for some reason :(1) resend more than three times (2)data not send complete but content buffer is full last more than 8s
@@ -179,23 +179,23 @@ static void receive_time_out_handle(void *contenxt)
 /* bonding time out handle */
 static void user_action_timeout_handle(void *context)
 {
-//    USER_TIMER_COMMAND_t command = (USER_TIMER_COMMAND_t)context;
-//    if (command == DO_BOND)
-//    {
-//        //    led_action_stop();
-//        //    reset_short_press_action_SM(INPUT_ACCEPT_BOND);
-//        //    bond_fail_event_dispatch();
-//    }
-//    else if (command == DO_WAIT_BOND_COMMAND)
-//    { // wait bond time out
-//        if (m_conn_handle != BLE_CONN_HANDLE_INVALID)
-//        {                                                                                    // still connected
-//            sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION); // disconnect to the peer
-//        }
-//    }
-//    else
-//    {
-//    }
+    //    USER_TIMER_COMMAND_t command = (USER_TIMER_COMMAND_t)context;
+    //    if (command == DO_BOND)
+    //    {
+    //        //    led_action_stop();
+    //        //    reset_short_press_action_SM(INPUT_ACCEPT_BOND);
+    //        //    bond_fail_event_dispatch();
+    //    }
+    //    else if (command == DO_WAIT_BOND_COMMAND)
+    //    { // wait bond time out
+    //        if (m_conn_handle != BLE_CONN_HANDLE_INVALID)
+    //        {                                                                                    // still connected
+    //            sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION); // disconnect to the peer
+    //        }
+    //    }
+    //    else
+    //    {
+    //    }
 }
 
 /**********************************************************************
@@ -510,7 +510,7 @@ LABEL_SEND_ACK:
             }
             else
             {
-                // 
+                //
                 current_task_type = TASK_NONE;
                 next_task_type = TASK_NONE;
                 g_ack_package_buffer.isUsed = 0;
@@ -678,6 +678,28 @@ SEND_DATA_LABLE:
 
 uint32_t L1_send(L2_Send_Content *content)
 {
+   
+	/*fill header*/
+    global_reponse_buffer[L1_HEADER_MAGIC_POS] = L1_SEND_HEADER_MAGIC;                      /* Magic */
+    global_reponse_buffer[L1_HEADER_PROTOCOL_VERSION_POS] = L1_HEADER_VERSION;              /* protocol version */
+    global_reponse_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] = (content->length >> 8 & 0xFF); /* length high byte */
+    global_reponse_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] = (content->length & 0xFF);       /* length low byte */
+    /*cal crc*/
+    uint16_t crc16_ret = bd_crc16(0, content->content, content->length);
+    global_reponse_buffer[L1_HEADER_CRC16_HIGH_BYTE_POS] = (crc16_ret >> 8) & 0xff;
+    global_reponse_buffer[L1_HEADER_CRC16_LOW_BYTE_POS] = crc16_ret & 0xff;
+
+    // sequence id
+    global_reponse_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] = (L1_sequence_id >> 8) & 0xff;
+    global_reponse_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] = L1_sequence_id & 0xff;
+	
+	  uint16_t  sendLen = content->length + 8;
+	
+	  ble_uart_send_string(global_reponse_buffer, &sendLen);
+	
+	  L1_sequence_id++;
+	
+#if 0
     uint32_t err_code;
 
     if (!content)
@@ -739,6 +761,7 @@ uint32_t L1_send(L2_Send_Content *content)
 
     // schedule async send
     schedule_async_send(&sendContent[i], TASK_DATA);
+#endif
 
     return NRF_SUCCESS;
 }
@@ -907,7 +930,7 @@ static uint32_t resolve_notify_command(uint8_t key, const uint8_t *value, uint16
     switch (key)
     {
     case 0x01: // phone call
-        //    notification_start(NOTIFICATION_CALLING,0);
+               //    notification_start(NOTIFICATION_CALLING,0);
 #ifdef DEBUG_LOG
 
 //            LOG(LEVEL_INFO,"----------PHONE CALLED\r\n");
@@ -1108,59 +1131,58 @@ void bond_success_event_observer(void)
 
 #if 1
 /************************************************************************
-* resolve bond command
-* ���ְ󶨺͵�¼�����������Ҫ�ǵ�¼�����ǲ�Ӧ����ʾ�û��û��ֻ�
-*************************************************************************/
-static uint32_t  resolve_private_bond_command(uint8_t key,const uint8_t * value ,uint16_t length)
+ * resolve bond command
+ * ���ְ󶨺͵�¼�����������Ҫ�ǵ�¼�����ǲ�Ӧ����ʾ�û��û��ֻ�
+ *************************************************************************/
+static uint32_t resolve_private_bond_command(uint8_t key, const uint8_t *value, uint16_t length)
 {
     uint32_t err_code = NRF_SUCCESS;
 
-    if( (key == 0x01) || (key == 0x02)) { //receive bond or login command
-        app_timer_stop(user_action_delay_timer); //stop wait bond command timer
+    if ((key == 0x01) || (key == 0x02))
+    {                                            // receive bond or login command
+        app_timer_stop(user_action_delay_timer); // stop wait bond command timer
     }
-		
-    switch(key) {
-        case 0x01: //bond request
-            /* schdule proper task */
-            if((length == USER_ID_LENGTH) && value) 
-						{
 
-                memcpy((uint8_t*)user_id,value,USER_ID_LENGTH);
-                //global_short_press_action = INPUT_ACCEPT_BOND; //wait knock event to accept bond
-                app_timer_start(user_action_delay_timer,USER_ACTION_TIMEOUT,(void *)DO_BOND);
-             
-            } 
-						else 
-						{
-             //   bond_fail_event_dispatch();
-            }
-            break;
-        case 0x02: //login request
-            if((length == USER_ID_LENGTH) && value) {
+    switch (key)
+    {
+    case 0x01: // bond request
+        /* schdule proper task */
+        if ((length == USER_ID_LENGTH) && value)
+        {
 
-//                err_code = check_user_id_bonded(value,USER_ID_LENGTH);
-//                if(err_code == NRF_SUCCESS) {
-//                    if(sleep_setting_count() == 0){// resend sleeping status if apk was reinstalled
-//                        send_last_time_sleep_mode();
-//                    }
+            memcpy((uint8_t *)user_id, value, USER_ID_LENGTH);
+            // global_short_press_action = INPUT_ACCEPT_BOND; //wait knock event to accept bond
+            app_timer_start(user_action_delay_timer, USER_ACTION_TIMEOUT, (void *)DO_BOND);
+        }
+        else
+        {
+            //   bond_fail_event_dispatch();
+        }
+        break;
+    case 0x02: // login request
+        if ((length == USER_ID_LENGTH) && value)
+        {
 
-//                    login_success_event_dispatch();
-//                    //change bond status machine
-//                    private_bond_machine =PRIVATE_BOND_SUCCESS;
-//                    break;
-//                }
+            //                err_code = check_user_id_bonded(value,USER_ID_LENGTH);
+            //                if(err_code == NRF_SUCCESS) {
+            //                    if(sleep_setting_count() == 0){// resend sleeping status if apk was reinstalled
+            //                        send_last_time_sleep_mode();
+            //                    }
 
-            }
+            //                    login_success_event_dispatch();
+            //                    //change bond status machine
+            //                    private_bond_machine =PRIVATE_BOND_SUCCESS;
+            //                    break;
+            //                }
+        }
 
-            //code comes here reflects login fail
-           // login_fail_event_dispatch();
-            //login fail so restart wait bond command
-//            app_timer_start(user_action_delay_timer,WAIT_BOND_COMMAND_TIMEOUT,(void *)DO_WAIT_BOND_COMMAND);
-            break;
-
+        // code comes here reflects login fail
+        // login_fail_event_dispatch();
+        // login fail so restart wait bond command
+        //            app_timer_start(user_action_delay_timer,WAIT_BOND_COMMAND_TIMEOUT,(void *)DO_WAIT_BOND_COMMAND);
+        break;
     }
     return err_code;
-
 }
 
 #endif
@@ -1265,40 +1287,37 @@ static uint32_t resolve_test_flash_command(uint8_t key, const uint8_t *value, ui
 #endif
 static void process_app_save_history(uint8_t key)
 {
-	    L2_Send_Content sendContent;
-	
-	    global_reponse_buffer[0] = 0x05;                              /*command id*/
-       global_reponse_buffer[1] = L2_HEADER_VERSION;                               /*L2 header version */
-        global_reponse_buffer[2] = key;                               /*first key, bond response*/
-        global_reponse_buffer[3] = 0;
-        global_reponse_buffer[4] = 12;                                   /* length  = 12 */
-						    
-	              
-		global_reponse_buffer[5] = 11;       
-                
-               
-        sendContent.callback    = NULL;
-        sendContent.content     = global_reponse_buffer;
-                sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
-                L1_send(&sendContent);
+    L2_Send_Content sendContent;
+
+    global_reponse_buffer[0] = 0x05;              /*command id*/
+    global_reponse_buffer[1] = L2_HEADER_VERSION; /*L2 header version */
+    global_reponse_buffer[2] = key;               /*first key, bond response*/
+    global_reponse_buffer[3] = 0;
+    global_reponse_buffer[4] = 12; /* length  = 12 */
+
+    global_reponse_buffer[5] = 11;
+
+    sendContent.callback = NULL;
+    sendContent.content = global_reponse_buffer;
+    sendContent.length = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
+    L1_send(&sendContent);
 }
 
 p_callback motion_process_table[] = {
-	     process_app_save_history,
-	     NULL,
-	     NULL,
-	     NULL,
-	     NULL,
-	     NULL,
-	     NULL,
-	     NULL,
-	     NULL,
-	     NULL,
-	     NULL,
-	     NULL,
-	     NULL,
+    process_app_save_history,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
 };
-
 
 /***********************************************************************
  * para introduction
@@ -1320,50 +1339,67 @@ static uint32_t L2_frame_resolve(uint8_t *data, uint16_t length, RECEIVE_STATE *
     uint8_t first_key;           /* first key of L2 payload*/
     uint16_t first_value_length; /* length of first value */
 
-		L2_Send_Content sendContent;
+    L2_Send_Content sendContent;
     command_id = (BLUETOOTH_COMMUNICATE_COMMAND)data[0];
     version_num = data[1];
     version_num = version_num; /*current not use it*/
-		
-		first_key = data[2];
-		
-		switch(command_id)
-		{
-			case 0x02:   //device information
-			{	
-						device_information_report(first_key);
-				    break;
-			}
-			
-			case 0x04:
-			{
-				   if(first_key == 0x07)
-					 {
-						    battery_capacity_report(first_key);
-					 }
-					 else if(first_key == 0x06)
-					 {
-						   battery_charge_state_report(first_key);
-					 }
-				
-				break;
-			}
-			
-			case 0x05:
-			{
-				   p_callback p = motion_process_table[first_key - APP_SAVE_HISTORY];
-				
-				   if(p != NULL)
-					 {
-						   p(first_key);
-					 }
-				
-			}break;
-				
-			default:
-				break;
-		}
-		
+
+    first_key = data[2];
+
+    switch (command_id)
+    {
+    case 0x03: // app firmware information
+    {
+        device_information_report(first_key);
+        break;
+    }
+
+    case 0x02:
+    {
+        if (first_key == 0x01) // time setting
+        {
+            ring_device_time_setting(&data[3]);
+        }
+        else if (first_key == 0x02) // profile setting
+        {
+            ring_device_profile_setting(&data[3]);
+        }
+        break;
+    }
+
+    case 0x04:
+    {
+        if (first_key == 0x02) // battery state ADC value
+        {
+            battery_capacity_report(first_key);
+        }
+        else if (first_key == 0x01) // battery charge state
+        {
+            battery_charge_state_report(first_key);
+        }
+				else if (first_key == 0x03)
+				{
+					  device_information_report(first_key);
+				}
+
+        break;
+    }
+
+    case 0x05:
+    {
+        p_callback p = motion_process_table[first_key - APP_SAVE_HISTORY];
+
+        if (p != NULL)
+        {
+            p(first_key);
+        }
+    }
+    break;
+
+    default:
+        break;
+    }
+
 #if 0
     switch (private_bond_machine)
     {
@@ -1638,12 +1674,12 @@ void L1_receive_data(uint8_t *data, uint16_t length)
 
             uint16_t crc16_value = (received_buffer[L1_HEADER_CRC16_HIGH_BYTE_POS] << 8 | received_buffer[L1_HEADER_CRC16_LOW_BYTE_POS]);
 
-         //   if (L1_crc_check(crc16_value, received_buffer + L1_HEADER_SIZE, (received_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] | (received_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] << 8))) == NRF_SUCCESS)
-		    if(1)
+            //   if (L1_crc_check(crc16_value, received_buffer + L1_HEADER_SIZE, (received_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] | (received_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] << 8))) == NRF_SUCCESS)
+            if (1)
             { // check crc for received package
                 NRF_LOG_INFO("will send success response\n");
                 // send response
-             //   L1_receive_response((received_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] | (received_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)), true);
+                //   L1_receive_response((received_buffer[L1_HEADER_SEQ_ID_LOW_BYTE_POS] | (received_buffer[L1_HEADER_SEQ_ID_HIGH_BYTE_POS] << 8)), true);
                 /*throw data to uppder layer*/
                 L2_frame_resolve(received_buffer + L1_HEADER_SIZE, (received_buffer[L1_PAYLOAD_LENGTH_LOW_BYTE_POS] | (received_buffer[L1_PAYLOAD_LENGTH_HIGH_BYTE_POS] << 8)), &receive_state);
             }

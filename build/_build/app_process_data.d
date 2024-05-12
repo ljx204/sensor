@@ -100,3 +100,4 @@
 .\_build\app_process_data.o: C:\Keil_v5\ARM\armcompile5\Bin\..\include\stdlib.h
 .\_build\app_process_data.o: ..\components\libraries\balloc\nrf_balloc.h
 .\_build\app_process_data.o: ..\components\libraries\log\nrf_log_default_backends.h
+.\_build\app_process_data.o: ..\src\app_adc_battery\app_battery.h

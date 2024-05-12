@@ -1118,7 +1118,9 @@ void rtc_handler(nrf_drv_rtc_int_type_t int_type)
 
 APP_TIMER_DEF(ppg_process_timer);
 
-extern void ppg_sensor_interrupt_process(void *p_event_data, uint16_t event_size);
+extern void ppg_sensor_interrupt_process_hr(void *p_event_data, uint16_t event_size);
+
+extern void ppg_sensor_interrupt_process_spo2(void *p_event_data, uint16_t event_size);
 
 void ppg_handle_gpio_interrupt(pxi_nrf_gpio_in gpio_in, pxi_nrf_gpio_status gpio_status)
 {
@@ -1126,7 +1128,7 @@ void ppg_handle_gpio_interrupt(pxi_nrf_gpio_in gpio_in, pxi_nrf_gpio_status gpio
     if (gpio_in == PXI_NRF_GPIO_IN_6 && gpio_status == PXI_NRF_GPIO_STATUS_LOW)
     {
 #if PPG_SCHEDULER_ENABLE
-        app_sched_event_put(NULL, 0, ppg_sensor_interrupt_process);
+        app_sched_event_put(NULL, 0, ppg_sensor_interrupt_process_hr);
 #else
         ppg_interrupt_handle();
 #endif
@@ -1151,20 +1153,54 @@ void app_pah8009_process(void)
     pxi_nrf_gpio_in_init();
     pxi_nrf_gpio_in_set_interrupt_handler(ppg_handle_gpio_interrupt);
     pxi_nrf_gpio_in_pull(PXI_NRF_GPIO_IN_6, PXI_NRF_GPIO_PULL_TYPE_PULLUP);
+	
+	  app_pah8009_start(HEARTBEAT_MODE);
 
 	
-	  ret = pah_sensor_init(diw_4mm_g_ir_hrd);   //heartbeat
+//	  ret = pah_sensor_init(diw_4mm_g_ir_hrd);   //heartbeat
+//	
+// //   ret = pah_sensor_init(diw_4mm_ir_r_ir_spo2);  //spo2
+
+//    if (!ret)
+//    {
+//        return;
+//    }
+
+//    auto_mode_sensor_start();
+
+}
+
+void app_pah8009_stop(void)
+{
+	  pxi_nrf_gpio_in_set_interrupt_handler(NULL);
+	  pah_sensor_stop();
+}
+
+void app_pah8009_start(PAH8009_WORK_MODE mode)
+{
+	  int ret;
 	
- //   ret = pah_sensor_init(diw_4mm_ir_r_ir_spo2);  //spo2
+	  pxi_nrf_gpio_in_set_interrupt_handler(ppg_handle_gpio_interrupt);
+	
+	  if(mode == HEARTBEAT_MODE)
+		{
+	      ret = pah_sensor_init(diw_4mm_g_ir_hrd);       //heartbeat
+		}
+		else if(mode == SPO2_MODE)
+		{
+        ret = pah_sensor_init(diw_4mm_ir_r_ir_spo2);   //spo2
+	  }
 
     if (!ret)
     {
         return;
     }
-
+		
     auto_mode_sensor_start();
-
 }
+
+
+
 
 void pah_write_data(unsigned char reg, const unsigned char data)
 {
@@ -1172,9 +1208,9 @@ void pah_write_data(unsigned char reg, const unsigned char data)
 }
 
 /*
-  led_type = 0  //infrared
-  led_type = 1  //green
-  led_type = 2;  //red
+  led_type = 0   // infrared
+  led_type = 1   // green
+  led_type = 2;  // red
 */
 void pah8009_set_led(LED_TYPE led_type)
 {

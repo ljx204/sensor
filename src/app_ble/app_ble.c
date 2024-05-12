@@ -35,7 +35,11 @@ uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID;
 
 static ble_uuid_t m_adv_uuids[] = /**< Universally unique service identifiers. */
     {
-        {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}};
+       {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}
+			
+			   // {0x0001, BLE_UUID_TYPE_VENDOR_BEGIN}
+			
+		};
 
 /**@brief Function for putting the chip into sleep mode.
  *
@@ -89,15 +93,42 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
 static void advertising_init(void)
 {
     ret_code_t err_code;
+	
+	  ble_gap_addr_t addr;
+	
+	  uint8_t my_adv_manuf_data[6];
+	
     ble_advertising_init_t init;
 
     memset(&init, 0, sizeof(init));
+	
+	  err_code = sd_ble_gap_addr_get(&addr);
+	
+	  my_adv_manuf_data[0] = addr.addr[0];
+	  my_adv_manuf_data[1] = addr.addr[1];
+	  my_adv_manuf_data[2] = addr.addr[2];
+	  my_adv_manuf_data[3] = addr.addr[3];
+	  my_adv_manuf_data[4] = addr.addr[4];
+	  my_adv_manuf_data[5] = addr.addr[5];
+	
+	  
+    // 定义一个制造商自定义数据的结构体变量，配置广播数据时将该变量的地址赋值给广播数据包中
+    ble_advdata_manuf_data_t manuf_specific_data;
+    // 0x0059是Nordic的制造商ID
+    manuf_specific_data.company_identifier = 0x0059;
+    // 指向自定义数据
+    manuf_specific_data.data.p_data = my_adv_manuf_data;
+    // 自定义数据的大小
+    manuf_specific_data.data.size   = sizeof(my_adv_manuf_data);
+    // 定义自定义数据到广播包中
+    init.advdata.p_manuf_specific_data = &manuf_specific_data;
+
 
     init.advdata.name_type = BLE_ADVDATA_FULL_NAME;
     init.advdata.include_appearance = true;
     init.advdata.flags = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
-    init.advdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
-    init.advdata.uuids_complete.p_uuids = m_adv_uuids;
+    init.advdata.uuids_solicited.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
+    init.advdata.uuids_solicited.p_uuids = m_adv_uuids;
 
     init.config.ble_adv_fast_enabled = true;
     init.config.ble_adv_fast_interval = APP_ADV_INTERVAL;
@@ -302,6 +333,7 @@ void app_ble_init(void)
     conn_params_init();
 
     app_sec_init();
+
 }
 
 /**@brief Function for starting advertising.

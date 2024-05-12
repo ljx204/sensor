@@ -22,20 +22,12 @@ Dialog DLL:      TCM.DLL V1.56.4.0
  
 <h2>Project:</h2>
 C:\project\2024\github\sensor\build\ble_sensor.uvprojx
-Project File Date:  05/05/2024
+Project File Date:  05/12/2024
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 7 (build 960)', folder: 'C:\Keil_v5\ARM\armcompile5\Bin'
 Build target 'nrf52832_xxaa'
-compiling app.c...
-..\src\app\app.c(117): error:  #20: identifier "uart_event_handle" is undefined
-      APP_UART_FIFO_INIT(&comm_params,
-..\src\app\app.c(130): warning:  #177-D: variable "err_code"  was declared but never referenced
-      ret_code_t err_code;
-..\src\app\app.c(99): warning:  #177-D: function "uart_init"  was declared but never referenced
-  static void uart_init(void)
-..\src\app\app.c: 2 warnings, 1 error
-".\_build\app.axf" - 1 Error(s), 2 Warning(s).
+".\_build\app.axf" - 0 Error(s), 0 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -62,10 +54,9 @@ Package Vendor: NordicSemiconductor
 
    * Component: NordicSemiconductor::Device:Startup:8.40.3
       Source file:   Device/Source/arm/arm_startup_nrf52.s
-      Include file:  Device/Include/system_nrf52.h
       Source file:   Device/Source/system_nrf52.c
+      Include file:  Device/Include/system_nrf52.h
       Include file:  Device/Include/system_nrf.h
-Target not created.
 Build Time Elapsed:  00:00:01
 </pre>
 </body>

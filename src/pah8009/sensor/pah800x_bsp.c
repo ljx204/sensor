@@ -61,23 +61,37 @@ void pah_print(
     va_start(argptr, format);
     char_num = vsprintf(dest, format, argptr);
     va_end(argptr);
-
-//    //uart_printf("%s", dest);
 		
-	    dest[char_num] = '\n';
+	  dest[char_num] = '\n';
 		
-	    NRF_LOG_INFO("%s", dest);
+	  NRF_LOG_INFO("%s", dest);
 		
 		NRF_LOG_PROCESS();
 	
 
-//    //
-//    pxi_nrf_uart_transmit((uint8_t*)dest, (uint16_t)(char_num + 1));
+
 }
 
-void ReadGSensor(float *x, float *y, float *z)
+void sensor_print( const char *format, ...)
 {
-    *x = 0.11111111;
-	  *y = 1.1;
-	  *z = 1.4444;
+    char dest[500];
+    va_list argptr;
+    int char_num = 0;
+
+    if (!format)
+        return;
+
+    va_start(argptr, format);
+    char_num = vsprintf(dest, format, argptr);
+    va_end(argptr);
+		
+	  dest[char_num] = '\n';
+		
+	  NRF_LOG_INFO("%s", dest);
+		
+		NRF_LOG_PROCESS();
+	
 }
+
+
+

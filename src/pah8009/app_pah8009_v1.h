@@ -15,9 +15,19 @@ typedef enum {
 }LED_TYPE;
 
 
+typedef enum {
+	  HEARTBEAT_MODE,
+	  SPO2_MODE
+}PAH8009_WORK_MODE;
+
 void pah8009_set_led(LED_TYPE led_type);
 void pah8009_led_off(void);
 
+void app_pah8009_start(PAH8009_WORK_MODE mode);
+
+void app_pah8009_stop(void);
+
+void app_pah8009_process(void);
 
 #endif
 

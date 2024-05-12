@@ -62,7 +62,9 @@
 .\_build\app.o: ..\components\libraries\log\nrf_log_instance.h
 .\_build\app.o: ..\components\libraries\log\nrf_log_types.h
 .\_build\app.o: ..\components\libraries\sortlist\nrf_sortlist.h
-.\_build\app.o: ..\src\pah8009\app_pah8009.h
+.\_build\app.o: ..\src\pah8009\app_pah8009_v1.h
+.\_build\app.o: C:\Keil_v5\ARM\armcompile5\Bin\..\include\stdarg.h
+.\_build\app.o: C:\Keil_v5\ARM\armcompile5\Bin\..\include\stdlib.h
 .\_build\app.o: ..\components\libraries\scheduler\app_scheduler.h
 .\_build\app.o: ..\src\app_adc_battery\app_saadc.h
 .\_build\app.o: ..\integration\nrfx\legacy\nrf_drv_saadc.h
@@ -103,11 +105,10 @@
 .\_build\app.o: ..\components\libraries\log\src\nrf_log_ctrl_internal.h
 .\_build\app.o: ..\components\libraries\log\nrf_log_backend_interface.h
 .\_build\app.o: ..\components\libraries\memobj\nrf_memobj.h
-.\_build\app.o: C:\Keil_v5\ARM\armcompile5\Bin\..\include\stdlib.h
 .\_build\app.o: ..\components\libraries\balloc\nrf_balloc.h
 .\_build\app.o: ..\components\libraries\log\nrf_log_default_backends.h
 .\_build\app.o: ..\src\app_pedometer\app_motion.h
 .\_build\app.o: ..\src\app_pedometer\stkMotion.h
 .\_build\app.o: ..\src\app\app_process_data.h
-.\_build\app.o: ..\components\libraries\uart\app_uart.h
-.\_build\app.o: ..\modules\nrfx\hal\nrf_uart.h
+.\_build\app.o: ..\src\app_adc_battery\app_battery.h
+.\_build\app.o: ..\src\app_flash\app_flash.h

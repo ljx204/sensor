@@ -21,14 +21,19 @@
 #include "app_uart_task.h"
 
 #include "app_saadc.h"
+#include "app_battery.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
-#define  DEVICE_INFORMATION "RING_SENSOR_20240510"
+#define  RING_FIRMATION_INFORMATION "V1.00.01_20240511"
  
 extern  uint8_t global_reponse_buffer[];
+
+watch_time    globa_watch_timer;
+
+ring_profile  global_profile;
 
 APP_TIMER_DEF(m_data_report_timer_id);
 
@@ -112,18 +117,18 @@ void device_information_report(uint8_t key)
 {
     L2_Send_Content sendContent;
 
-    global_reponse_buffer[0] = 0x02;                              /*command id*/
-    global_reponse_buffer[1] = L2_HEADER_VERSION;                               /*L2 header version */
-    global_reponse_buffer[2] = key;                               /*first key, bond response*/
-    global_reponse_buffer[3] = 0;
-    global_reponse_buffer[4] = 20;                                   /* length  = 20 */
+    global_reponse_buffer[8] = 0x03;                              /*command id*/
+    global_reponse_buffer[9] = L2_HEADER_VERSION;                               /*L2 header version */
+    global_reponse_buffer[10] = key;                               /*first key, bond response*/
+    global_reponse_buffer[11] = 0;
+    global_reponse_buffer[12] = strlen(RING_FIRMATION_INFORMATION);                                   /* length  = 20 */
     //FIXME: need to def version information
     
-    strcpy((char *)&global_reponse_buffer[5], (char *)DEVICE_INFORMATION);
+    strcpy((char *)&global_reponse_buffer[13], (const char *)RING_FIRMATION_INFORMATION);
    		
     sendContent.callback    = NULL;
-    sendContent.content     = global_reponse_buffer;
-    sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
+    sendContent.content     = &global_reponse_buffer[8];
+    sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[12];
     
     L1_send(&sendContent);
 
@@ -134,18 +139,18 @@ void battery_capacity_report(uint8_t key)
 {
     L2_Send_Content sendContent;
 
-    global_reponse_buffer[0] = 0x04;                              /*command id*/
-    global_reponse_buffer[1] = L2_HEADER_VERSION;                 /*L2 header version */
-    global_reponse_buffer[2] = key;                               /*first key, bond response*/
-    global_reponse_buffer[3] = 0;
-    global_reponse_buffer[4] = 1;                                 /* length  = 1 */
+    global_reponse_buffer[8] = 0x04;                              /*command id*/
+    global_reponse_buffer[9] = L2_HEADER_VERSION;                 /*L2 header version */
+    global_reponse_buffer[10] = key;                               /*first key, bond response*/
+    global_reponse_buffer[11] = 0;
+    global_reponse_buffer[12] = 1;                                 /* length  = 1 */
 						    
-	global_reponse_buffer[5] = BatteryVoltage;     //battery volume    
+	  global_reponse_buffer[13] = BatteryVoltage;     //battery volume    
                 
                
     sendContent.callback    = NULL;
     sendContent.content     = global_reponse_buffer;
-    sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
+    sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[12];
     L1_send(&sendContent);
 
 }
@@ -154,19 +159,64 @@ void battery_charge_state_report(uint8_t key)
 {
     L2_Send_Content sendContent;
 
-    global_reponse_buffer[0] = 0x04;                              /*command id*/
-    global_reponse_buffer[1] = L2_HEADER_VERSION;                 /*L2 header version */
-    global_reponse_buffer[2] = key;                               /*first key, bond response*/
-    global_reponse_buffer[3] = 0;
-    global_reponse_buffer[4] = 1;                                 /* length  = 1 */
+    global_reponse_buffer[8] = 0x04;                              /*command id*/
+    global_reponse_buffer[9] = L2_HEADER_VERSION;                 /*L2 header version */
+    global_reponse_buffer[10] = key;                               /*first key, bond response*/
+    global_reponse_buffer[11] = 0;
+    global_reponse_buffer[12] = 1;                                 /* length  = 1 */
 						    
-	global_reponse_buffer[5] = BatteryVoltage;                    //battery charge state    
+	 global_reponse_buffer[13] = state_charge;                    //battery charge state    
                 
                
     sendContent.callback    = NULL;
     sendContent.content     = global_reponse_buffer;
-    sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[4];
+    sendContent.length      = L2_HEADER_SIZE + L2_PAYLOAD_HEADER_SIZE + global_reponse_buffer[12];
     L1_send(&sendContent);
     
+}
+
+
+
+void ring_device_time_setting(uint8_t *p_buffer)
+{
+	  globa_watch_timer.year = ((p_buffer[0] >> 2)&0x3f) + 2000;
+	
+	  globa_watch_timer.month = ((p_buffer[0] & 0x03)<< 2) + ((p_buffer[1] >> 6)&0x03);
+	
+	  globa_watch_timer.day  = (p_buffer[1] >> 1)&0x1f;
+	
+	  globa_watch_timer.hour = ((p_buffer[1]&0x01) << 5) + ((p_buffer[2]&0x0f) >> 4);
+	
+	  globa_watch_timer.minute = (p_buffer[3] >> 6)&0x03 + ((p_buffer[2]&0x0f) << 2);
+	
+	  globa_watch_timer.second = p_buffer[3]&0x3f;
+	
+	  NRF_LOG_INFO("time %d  %d  %d  %d  %d  %d ", globa_watch_timer.year, globa_watch_timer.month,
+	        globa_watch_timer.day,   globa_watch_timer.hour, globa_watch_timer.minute,
+	        globa_watch_timer.second	       
+	  );
+}
+
+void ring_device_profile_setting(uint8_t *p_buffer)
+{
+	  global_profile.age  = p_buffer[0] & 0x7f;
+	
+	  global_profile.sex = (p_buffer[0] >> 7)&0x01;
+	
+	  global_profile.height = p_buffer[1];
+	  
+	  global_profile.height <<= 1;
+	
+	  global_profile.height += ((p_buffer[2] >> 7)&0x01);
+	
+	  global_profile.weight = p_buffer[2]&0x7f;
+	
+	  global_profile.weight <<= 3;
+	
+	  global_profile.weight += ((p_buffer[3] >> 5)&0x7);
+	
+	   NRF_LOG_INFO("profile %d  %d  %d  %d ", global_profile.sex, global_profile.age,
+	        global_profile.height,   global_profile.weight
+	  );
 }
 

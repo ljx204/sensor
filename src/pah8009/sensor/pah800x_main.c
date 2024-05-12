@@ -1416,23 +1416,22 @@ static void report_hr_data(const ppg_mems_data_t *ppg_mems_data_alg, int32_t ret
         _main.debug_print_header = false;
     }
 		
-		NRF_LOG_INFO("A: %d,  %d,  %d,  %d,  %d ",
-                ppg_mems_data_alg->ppg_frame_count,  ppg_mems_data_alg->touch_flag,
-                  
-                ppg_mems_data_alg->ppg_data.data[0], ppg_mems_data_alg->ppg_data.data[1], ppg_mems_data_alg->ppg_data.data[2]
-		           );
-		
-		NRF_LOG_INFO("B: %d,  %d,  %d,  %d", (int)(ppg_mems_data_alg->MEMS_Data[0]), (int)(ppg_mems_data_alg->MEMS_Data[1]), (int)(ppg_mems_data_alg->MEMS_Data[2]), hr);
-
-		
-
-//				 NRF_LOG_INFO("%d, %d, %d, %d, %d, %d, %d, %d, %f\n",
+//		LOG_PRINT("A: %d,  %d,  %d,  %d,  %d ",
 //                ppg_mems_data_alg->ppg_frame_count,  ppg_mems_data_alg->touch_flag,
 //                  
-//                ppg_mems_data_alg->ppg_data.data[0], ppg_mems_data_alg->ppg_data.data[1], ppg_mems_data_alg->ppg_data.data[2], \
-//                
-//                (ppg_mems_data_alg->MEMS_Data[0]), (ppg_mems_data_alg->MEMS_Data[1]), (ppg_mems_data_alg->MEMS_Data[2]), hr);
+//                ppg_mems_data_alg->ppg_data.data[0], ppg_mems_data_alg->ppg_data.data[1], ppg_mems_data_alg->ppg_data.data[2]
+//		           );
+//		
+//		LOG_PRINT("B: %d,  %d,  %d,  %d", (int)(ppg_mems_data_alg->MEMS_Data[0]), (int)(ppg_mems_data_alg->MEMS_Data[1]), (int)(ppg_mems_data_alg->MEMS_Data[2]), hr);
 
+		
+
+				 LOG_PRINT("%d, %d, %d, %d, %d, %d, %d, %d, %f ",
+                ppg_mems_data_alg->ppg_frame_count,  ppg_mems_data_alg->touch_flag,
+                  
+                ppg_mems_data_alg->ppg_data.data[0], ppg_mems_data_alg->ppg_data.data[1], ppg_mems_data_alg->ppg_data.data[2], \
+                
+                (int)(ppg_mems_data_alg->MEMS_Data[0]), (int)(ppg_mems_data_alg->MEMS_Data[1]), (int)(ppg_mems_data_alg->MEMS_Data[2]), hr);
 		
 		
   
@@ -1457,7 +1456,15 @@ static void report_spo2_data(const ppg_mems_data_t *ppg_mems_data_alg, int32_t r
 
   if(data_buf_count_spo2_alg>=25)
     {
-			           LOG_PRINT("hr = %f  spo2 = %f  hr_grade = %f ", mySpO2, myHR,hr_grader);
+			      //     sensor_print("hr = %f  spo2 = %f  hr_grade = %f ", mySpO2, myHR, hr_grader);
+			
+//			NRF_LOG_INFO(" "LOG_FLOAT_MARKER"  "LOG_FLOAT_MARKER" "LOG_FLOAT_MARKER" \n", LOG_FLOAT(mySpO2), \
+//			   LOG_FLOAT(myHR),  LOG_FLOAT(hr_grader));
+			
+			NRF_LOG_INFO(" "LOG_FLOAT_MARKER",  "LOG_FLOAT_MARKER" ", LOG_FLOAT(mySpO2), LOG_FLOAT(myHR) );
+			
+			NRF_LOG_INFO("touch = %d \n",  ppg_mems_data_alg->touch_flag);
+			
 			
 //                LOG_PRINT("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %f, %f, %f, %f, %f, %f, %d, %f, %d\n",
 //                ppg_mems_data_alg->ppg_frame_count, ppg_mems_data_alg->duration, ppg_mems_data_alg->touch_flag,
@@ -1527,11 +1534,24 @@ static void error_handle(void)
 }
 
 
-void ppg_sensor_interrupt_process(void *p_event_data, uint16_t event_size)
+
+void ppg_sensor_interrupt_process_hr(void *p_event_data, uint16_t event_size)
 {
 	       _main.interrupt_timestamp = pah_get_tick_count();
+	
          process(_main.interrupt_timestamp);
+	
 	       hr_alg_task();
-	   //   spo2_alg_task();
 }
+
+
+void ppg_sensor_interrupt_process_spo2(void *p_event_data, uint16_t event_size)
+{
+	       _main.interrupt_timestamp = pah_get_tick_count();
+	
+         process(_main.interrupt_timestamp);
+	      
+	       spo2_alg_task();
+}
+
 
