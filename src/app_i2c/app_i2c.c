@@ -20,6 +20,9 @@
 
 #include "nrf_drv_twi.h"
 
+//#include "GX310W.h"
+#include "pah800x_main.h"
+
 #define APP_SCL_PIN 3
 #define APP_SDA_PIN 1
 
@@ -136,6 +139,40 @@ void stk832x_registers_get(uint8_t reg_id, uint8_t *val, uint8_t size)
 #endif /* defined(STK832x_CRASH_FUNC_ENABLE) */
 }
 
+#if 0
+void gx310w_result_get(uint8_t *val)
+{
+    uint8_t m_value[2] = {0};
+    uint8_t reg[2] = {0};
+	int tem;
+    float Temperature=0;
+
+    reg[0] = 0x00;
+
+    nrf_drv_twi_tx(&m_app_twi, GX310W_ADDR, &reg[0], 1, false);
+
+    /* Read 1 byte from the specified address to get Chip ID */
+    nrf_drv_twi_rx(&m_app_twi, STK832x_ADDR, m_value, sizeof(m_value));
+
+    val = m_value;
+	
+	if(m_value[0]&0x80)
+    {
+        tem= 0x10000 - ((m_value[0] << 8) | m_value[1] );       	
+        Temperature = -(float)(tem * 0.0078125);
+    }
+    else
+    {
+        tem =(m_value[0] << 8) | m_value[1] ;
+        Temperature=(float)(tem * 0.0078125);
+    }
+	
+	//	SEGGER_RTT_printf(0, "Temperature:"LOG_FLOAT_MARKER"\n", LOG_FLOAT(Temperature));
+	NRF_LOG_INFO("Temperature:"LOG_FLOAT_MARKER"", LOG_FLOAT(Temperature));
+}
+
+#endif
+
 ret_code_t pxi_nrf_i2c_write(uint8_t addr, const uint8_t *data, size_t write_size)
 {
     static uint8_t write_buffer[PXI_NRF_I2C_MAX_COMM_SIZE];
@@ -172,7 +209,7 @@ ret_code_t pxi_nrf_i2c_read(uint8_t addr, uint8_t *data, size_t read_size)
     nrf_drv_twi_tx(&m_app_twi, SLAVE_ID, &addr, 1, false);
 
     /* Read 1 byte from the specified address to get Chip ID */
-    return nrf_drv_twi_rx(&m_app_twi, SLAVE_ID, data, sizeof(data));
+    return nrf_drv_twi_rx(&m_app_twi, SLAVE_ID, data, read_size);
 
     //    *val = m_value;
 }

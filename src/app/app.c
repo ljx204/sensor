@@ -92,7 +92,7 @@ static void app_schduler_init(void)
 void app_init(void)
 {
 
-//    ret_code_t err_code;
+   ret_code_t err_code;
 
     // Initialize.
     log_init();
@@ -102,8 +102,8 @@ void app_init(void)
 #endif
 
     // ���� OTA ����
-    //	  err_code = ble_dfu_buttonless_async_svci_init();
-    //    APP_ERROR_CHECK(err_code);
+//    err_code = ble_dfu_buttonless_async_svci_init();
+//    APP_ERROR_CHECK(err_code);
 
     timers_init();
 

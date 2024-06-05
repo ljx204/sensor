@@ -82,8 +82,15 @@ void ppg_handle_gpio_interrupt(pxi_nrf_gpio_in gpio_in, pxi_nrf_gpio_status gpio
     if (gpio_in == PXI_NRF_GPIO_IN_6 && gpio_status == PXI_NRF_GPIO_STATUS_LOW)
     {
 #if PPG_SCHEDULER_ENABLE
+//		    _main.interrupt_timestamp = pah_get_tick_count();
+//	
+//         process(_main.interrupt_timestamp);
+			
+	//		   ppg_process();
+			
 			  if(pah_work_mode == HEARTBEAT_MODE)
 				{
+					//ppg_sensor_interrupt_process_hr(NULL, 0);
            app_sched_event_put(NULL, 0, ppg_sensor_interrupt_process_hr);
 				}
 				else if(pah_work_mode == SPO2_MODE)
@@ -109,7 +116,7 @@ void app_pah8009_process(void)
      pxi_nrf_gpio_in_set_interrupt_handler(ppg_handle_gpio_interrupt);
      pxi_nrf_gpio_in_pull(PXI_NRF_GPIO_IN_6, PXI_NRF_GPIO_PULL_TYPE_PULLUP);
 	
-	   app_pah8009_start(SPO2_MODE);
+	   app_pah8009_start(HEARTBEAT_MODE);
 	
 //	   ret = pah_sensor_init(diw_4mm_g_ir_hrd);
 //	
@@ -148,6 +155,8 @@ void app_pah8009_start(PAH8009_WORK_MODE mode)
 void app_pah8009_stop(void)
 {
 	  pxi_nrf_gpio_in_set_interrupt_handler(NULL);
+	  hr_algorithm_disable();
+	  spo2_algorithm_disable();
 	  pah_sensor_stop();
 }
 

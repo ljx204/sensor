@@ -8,6 +8,7 @@
 
 */
 #include "app_saadc.h"
+#include "pah_800x_config.h"
 
 #define SAMPLES_IN_BUFFER (1)
 #define ADC_SAMPLE_BUFFER_SIZE (1)
@@ -54,8 +55,12 @@ void timer_handler(nrf_timer_event_t event_type, void *p_context)
 //    }
 //}
 
+#define LOG_FLOAT_MARKER "%c%d.%05d"
+#define LOG_FLOAT(val) ((val >= 0.0f)?32:45),(int32_t)((val >= 0.0f)?val:val*-1) , (int32_t)(((val > 0) ? (val) - (int32_t)(val): (int32_t)(val) - (val))*100000)                       
+
 void saadc_callback(nrf_drv_saadc_evt_t const *p_event)
 {
+	  volatile float  BatteryVoltage_f;
     if (p_event->type == NRF_DRV_SAADC_EVT_DONE)
     {
         uint32_t adc_battery = 0;
@@ -72,6 +77,21 @@ void saadc_callback(nrf_drv_saadc_evt_t const *p_event)
         //	adc_battery >>= 3;
 
         BatteryVoltage = (uint16_t)(((uint32_t)adc_battery * 2 * 6 * 6000) / (1024 * 10));
+				
+				BatteryVoltage_f = adc_battery;
+				BatteryVoltage_f -= 565.0;
+				BatteryVoltage_f *= 0.01;
+				BatteryVoltage_f += 4.0;
+		//		BatteryVoltage_f = (4.0 + (adc_battery - 565.0)*0.01);
+				
+				NRF_LOG_INFO("adc_battery = %d", adc_battery);
+				
+			//	NRF_LOG_INFO("battery = %f ", BatteryVoltage_f);
+				
+		//		NRF_LOG_INFO(" "LOG_FLOAT_MARKER" \n", LOG_FLOAT(BatteryVoltage_f));
+             
+		NRF_LOG_INFO(" "LOG_FLOAT_MARKER",  "LOG_FLOAT_MARKER" ", LOG_FLOAT(BatteryVoltage_f), LOG_FLOAT(BatteryVoltage_f) );
+				
     }
 }
 

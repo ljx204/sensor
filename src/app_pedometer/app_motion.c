@@ -58,7 +58,7 @@ static signed char sendEvent(STKMOTION_EVENT event, signed int data)
 
     if (event == STK_EVENT_STEP_NOTIFY)
     {
-       // NRF_LOG_INFO("step = %d \n", data);
+     //   NRF_LOG_INFO("step = %d \n", data);
         global_step = data;
     }
 		else if (event == STK_EVENT_FLIP_NOTIFY)
@@ -127,7 +127,7 @@ void STK832x_stkMotion_init(void)
 
     // level, default: 10 (1~50), window, default: 2 (range 0~4),
     // window 0 is most sensitive ��ƽ��Ĭ��ֵ��10(1~50)�����ڣ�Ĭ��ֵ��2(��Χ0~4)������0�������е�
-    stkMotion_Set_Pedometer_Params(10, 2);
+    stkMotion_Set_Pedometer_Params(25, 1);
 
     // reset calorie / distance data ���ÿ�·��/��������
     stkMotion_Clear_Step_Calorie_Distance_Value();

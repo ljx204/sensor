@@ -12,7 +12,7 @@
 #include "nrf_ble_gatt.h"
 #include "nrf_ble_qwr.h"
 
-#define DEVICE_NAME "co8"				/**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME "co8_123"				/**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME "RDW_LIUJIAN" /**< Manufacturer. Will be passed to Device Information Service. */
 
 #define MIN_CONN_INTERVAL MSEC_TO_UNITS(100, UNIT_1_25_MS) /**< Minimum acceptable connection interval (0.1 seconds). */

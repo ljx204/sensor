@@ -21,7 +21,7 @@
 #define APP_ADV_INTERVAL 300
 
 /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
-#define APP_ADV_DURATION 18000
+#define APP_ADV_DURATION 0  //18000
 
 /**< A tag identifying the SoftDevice BLE configuration. */
 #define APP_BLE_CONN_CFG_TAG 1
